@@ -5,7 +5,7 @@ const string HELP = @$"{TOOL_NAME} Commands:
     help
     protect (input-file) (output-file) (encryptionKey) (authKey)
     unprotect (input-file) (output-file) (decryptionKey)
-    check (input-file) (authKey)";
+    check (input-file) (authKey)"; //?Is this enough for help, or should we maybe be more specific? Insetad of authKey for protect, (sender's private key) or (your private key), etc. 
 
 if (args.Length < 1)
 {

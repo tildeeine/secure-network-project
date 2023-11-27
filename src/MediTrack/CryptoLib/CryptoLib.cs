@@ -13,7 +13,7 @@ public class Crypto
     ///
     /// </summary>
     /// <param name="data"><c>data</c> you want to encrypt.</param>
-    /// <param name="encryptionKey"><c>encryptionKey</c> is the public key of the receiver in Pem format. So only the receiver can read 
+    /// <param name="encryptionKey"><c>encryptionKey</c> is the public key of the receiver in Pem format. So only the receiver can read. 
     /// the encrypted data</param>
     /// <param name="authKey"><c>authKey</c> is the sender's private key in Pem format. Used to provide authenticity.</param>
     /// <returns> 
@@ -48,7 +48,7 @@ public class Crypto
     /// in order to get a shared <c>symmetric key</c>. With the <c>symmetric key</c> decrypt the remaining <paramref name="data"/>.
     /// </summary>
     /// <param name="data"><c>data</c> you want to decrypt.</param>
-    /// <param name="decryptionKey"><c>decryptionKey</c> is the public key of the receiver in Pem format.</param>
+    /// <param name="decryptionKey"><c>decryptionKey</c> is the private key of the receiver in Pem format.</param> 
     /// <returns> byte[]? with the <c>decrypted data</c> </returns>
     static public byte[]? Unprotect(byte[] data, string decryptionKey)
     {
