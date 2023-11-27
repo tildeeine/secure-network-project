@@ -1,8 +1,10 @@
-﻿const string TOOL_NAME = "CryptoLib";
+﻿using CryptoLib;
+
+const string TOOL_NAME = "CryptoLib";
 const string HELP = @$"{TOOL_NAME} Commands: 
     help
-    protect (input-file) (output-file) ...
-    unprotect (input-file) (output-file) ...
+    protect (input-file) (output-file) (encryptionKey) (authKey)
+    unprotect (input-file) (output-file) (decryptionKey)
     check (input-file)";
 
 if (args.Length < 1)
@@ -17,7 +19,9 @@ switch (args[0])
     case "protect":
     case "unprotect":
 
-        if (args.Length < 3)
+        int length = args.Length;
+        if ((length != 5 && args[0] == "protect")
+            || (length != 4 && args[0] == "unprotect"))
         {
             DisplayHelp();
             return;
@@ -29,10 +33,20 @@ switch (args[0])
             DisplayHelp();
             return;
         }
+        byte[]? bytes = null;
         if (args[0] == "protect")
+        {
             Console.WriteLine($"Protecting file {inputFile}");
+            bytes = Crypto.Protect(inputFile, args[3], args[4]);
+        }
         else
+        {
             Console.WriteLine($"Unprotecting file {inputFile}");
+            bytes = Crypto.Unprotect(inputFile, args[3]);
+        }
+        if (bytes is null)
+            return;
+        File.WriteAllBytes(args[2], bytes);
         break;
     case "check":
         if (args.Length < 2)
@@ -46,7 +60,7 @@ switch (args[0])
             DisplayHelp();
             return;
         }
-        Console.WriteLine($"Checking file {inputFile}");
+        Console.WriteLine(Crypto.Check(inputFile[..256], inputFile[256..], args[2]));
         break;
     case "help":
     default: DisplayHelp(); return;
@@ -69,4 +83,3 @@ void DisplayHelp()
 {
     Console.WriteLine(HELP);
 }
-
