@@ -20,8 +20,8 @@ switch (args[0])
     case "unprotect":
 
         int length = args.Length;
-        if ((length != 5 && args[0] == "protect")
-            || (length != 4 && args[0] == "unprotect"))
+        if ((args[0] == "protect" && length != 5)
+            || (args[0] == "unprotect" && length != 4))
         {
             DisplayHelp();
             return;
