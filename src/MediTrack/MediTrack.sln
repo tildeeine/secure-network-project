@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLib", "CryptoLib\CryptoLib.csproj", "{372BCBB7-348C-4071-918F-B8919F8D217C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLib.Tests", "CryptoLib.Tests\CryptoLib.Tests.csproj", "{69B68713-6AF6-4C67-966F-8608C6ABAD13}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{372BCBB7-348C-4071-918F-B8919F8D217C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{372BCBB7-348C-4071-918F-B8919F8D217C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{372BCBB7-348C-4071-918F-B8919F8D217C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{372BCBB7-348C-4071-918F-B8919F8D217C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
