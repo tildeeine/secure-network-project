@@ -5,7 +5,7 @@ const string HELP = @$"{TOOL_NAME} Commands:
     help
     protect (input-file) (output-file) (encryptionKey) (authKey)
     unprotect (input-file) (output-file) (decryptionKey)
-    check (input-file)";
+    check (input-file) (authKey)";
 
 if (args.Length < 1)
 {
@@ -49,7 +49,7 @@ switch (args[0])
         File.WriteAllBytes(args[2], bytes);
         break;
     case "check":
-        if (args.Length < 2)
+        if (args.Length < 3)
         {
             DisplayHelp();
             return;
