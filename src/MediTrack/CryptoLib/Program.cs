@@ -1,4 +1,5 @@
-﻿using CryptoLib;
+﻿using System.Text.Json.Nodes;
+using CryptoLib;
 
 const string TOOL_NAME = "CryptoLib";
 const string HELP = @$"{TOOL_NAME} Commands: 
@@ -37,7 +38,7 @@ switch (args[0])
         if (args[0] == "protect")
         {
             Console.WriteLine($"Protecting file {inputFile}");
-            bytes = Crypto.Protect(inputFile, args[3], args[4]);
+            bytes = Crypto.Protect(JsonNode.Parse(inputFile)!, args[3], args[4]);
         }
         else
         {
