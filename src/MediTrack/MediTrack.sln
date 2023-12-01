@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLib", "CryptoLib\Cryp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLib.Tests", "CryptoLib.Tests\CryptoLib.Tests.csproj", "{69B68713-6AF6-4C67-966F-8608C6ABAD13}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediTrackBackend", "MediTrackBackend\MediTrackBackend.csproj", "{C04E810D-3DE9-422B-95B5-F8A6EBF99995}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{69B68713-6AF6-4C67-966F-8608C6ABAD13}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
