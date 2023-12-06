@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CryptoLib.Tests", "CryptoLi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediTrackBackend", "MediTrackBackend\MediTrackBackend.csproj", "{C04E810D-3DE9-422B-95B5-F8A6EBF99995}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csproj", "{DB7D0730-E409-49E9-B3F2-9806665FA319}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C04E810D-3DE9-422B-95B5-F8A6EBF99995}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DB7D0730-E409-49E9-B3F2-9806665FA319}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB7D0730-E409-49E9-B3F2-9806665FA319}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB7D0730-E409-49E9-B3F2-9806665FA319}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB7D0730-E409-49E9-B3F2-9806665FA319}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
