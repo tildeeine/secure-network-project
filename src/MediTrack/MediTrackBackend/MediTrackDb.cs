@@ -1,6 +1,7 @@
 namespace MediTrack.Data;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 
 public class MediTrackDb : DbContext
 {
@@ -20,6 +21,7 @@ public class MediTrackDb : DbContext
                 {
                     Id = -1,
                     Name = "Bob",
+                    NIC = "000000000",
                     Sex = SexType.Male,
                     DateOfBirth = "2001-07-21",
                     BloodType = "O-",
@@ -38,10 +40,13 @@ public enum SexType
     Other
 }
 
+[Index(nameof(NIC), IsUnique = true)]
 public record Patient
 {
     public int Id { get; init; }
     public string Name { get; init; } = null!;
+    [RegularExpression(@"\d{9}", ErrorMessage = "NIC number should be a 9 digit number.")]
+    public string NIC { get; init; } = null!;
     [Column(TypeName = "nvarchar(24)")]
     public SexType Sex { get; init; }
     public string DateOfBirth { get; init; } = null!;
@@ -56,5 +61,6 @@ public record Consultation(
         string MedicalSpeciality, // should be enum?
         string DoctorName,
         string Practice, // should be enum?
-        string TreatmentSummary
+        string TreatmentSummary,
+        byte[] PhysicianSignature
 );

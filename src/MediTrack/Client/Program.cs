@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Text.Json.Nodes;
 using CryptoLib;
+using System.Net;
 
 const string TOOL_NAME = "Client";
 const string HELP = @$"{TOOL_NAME} Commands: 
@@ -9,7 +10,7 @@ const string HELP = @$"{TOOL_NAME} Commands:
 
 const string HELP_COMMAND = @$"Api Commands: 
     help
-    get [patientId]";
+    get [NIC (patient civil number)]";
 
 using HttpClient client = new();
 
@@ -40,6 +41,7 @@ switch (args[0])
         }
 
         string? command;
+        DisplayCommandHelp();
         while ((command = Console.ReadLine()) != "quit")
         {
             if (command is null)
@@ -48,7 +50,7 @@ switch (args[0])
                 continue;
             }
             string[] command_args = command.Split(' ');
-            switch (command)
+            switch (command_args[0])
             {
                 case "get":
                     GetPatient(command_args[1..]);
@@ -57,15 +59,28 @@ switch (args[0])
                     DisplayCommandHelp();
                     break;
             }
+            DisplayCommandHelp();
         }
         break;
     case "help":
     default: DisplayHelp(); return;
 }
 
-async void GetPatient(string[] strings)
+async void GetPatient(string[] args)
 {
-    var response = await client.GetAsync($"{HOST}/patients");
+    if (args.Length != 1){
+        Console.WriteLine("[Error] Command get should have one argument.\n");
+        return;
+    }
+
+    var response = await client.GetAsync($"{HOST}/patients/{args[0]}");
+
+    if (response.StatusCode != HttpStatusCode.OK)
+    {
+        Console.WriteLine("[Error] Bad Request.");
+        return;
+    }
+
     var signedData = await response.Content.ReadAsByteArrayAsync();
     var data = CryptoLib.Crypto.Unprotect(signedData, privateKey);
 
@@ -75,9 +90,11 @@ async void GetPatient(string[] strings)
         return;
     }
 
+    // Check message authenticity
     if (CryptoLib.Crypto.Check(signedData, data, serverPublicKey))
     {
         Console.WriteLine(data);
+        // TODO: check consultation record authenticity.
     }
     else
     {

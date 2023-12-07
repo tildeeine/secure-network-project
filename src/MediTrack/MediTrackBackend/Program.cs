@@ -35,22 +35,30 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("/patients", async (MediTrackDb db) =>
+app.MapGet("/patients/{nic}", async (MediTrackDb db, string nic) =>
 {
-    var patients = await db.Patients.ToListAsync();
-    return patients.Select(v =>
+    var patient = await db.Patients.Where(v => v.NIC == nic).FirstOrDefaultAsync();
+
+    if (patient is null)
+        return Results.BadRequest();
+
+    string patientObj = JsonSerializer.Serialize(patient, new JsonSerializerOptions
     {
-        string obj = JsonSerializer.Serialize(v, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        Console.WriteLine(obj);
-        JsonNode node = JsonNode.Parse($"{{\"patient\": {obj}}}");
-        var bytes =  Crypto.Protect(node, rsaClient.ExportRSAPublicKeyPem(), rsaServer.ExportRSAPrivateKeyPem());
-        Console.WriteLine(Encoding.UTF8.GetString(bytes));
-        return bytes;
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     });
 
+    Console.WriteLine(patientObj);
+    JsonNode node = JsonNode.Parse($"{{\"patient\": {patientObj}}}")!;
+
+    var bytes = Crypto.Protect(node, rsaClient.ExportRSAPublicKeyPem(), rsaServer.ExportRSAPrivateKeyPem());
+    if (bytes is null)
+    {
+        Console.WriteLine("[Error]: Protection failed.");
+        return Results.StatusCode(500);
+    }
+
+    // Console.WriteLine(Encoding.UTF8.GetString(bytes));
+    return Results.Bytes(bytes);
 });
 // app.MapGet("/patients/{id}", async (MediTrackDb db, int id) => await db.Patients.FindAsync(id));
 //.WithName("GetWeatherForecast")
