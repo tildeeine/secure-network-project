@@ -1,0 +1,48 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Ensure this Project is for Virtualbox Provider
+ENV['VAGRANT_DEFAULT_PROVIDER'] = "virtualbox"
+
+Vagrant.configure("2") do |config|
+  # Firewall 1
+  config.vm.define "firewall1" do |fw1_config|
+    fw1_config.vm.box = "kalilinux/rolling"
+    fw1_config.vm.network "public_network", type: "dhcp", name: "eth0" # Internet access
+
+    fw1_config.vm.provision "shell" do |shell|
+      shell.inline = "cat /vagrant/interfaces/external_firewall.txt | sudo tee -a /etc/network/interfaces"
+    end
+    # Additional configuration for firewall 1, allowing internet access and communication with the app server
+  end
+
+  # Application Server
+  config.vm.define "app_server" do |app_config|
+    app_config.vm.box = "kalilinux/rolling"
+
+    app_config.vm.provision "shell" do |shell|
+      shell.inline = "cat /vagrant/interfaces/application_server.txt | sudo tee -a /etc/network/interfaces"
+    end
+    # Additional configuration for the application server, if needed
+  end
+
+  # Firewall 2
+  config.vm.define "firewall2" do |fw2_config|
+    fw2_config.vm.box = "kalilinux/rolling"
+
+    fw2_config.vm.provision "shell" do |shell|
+      shell.inline = "cat /vagrant/interfaces/internal_firewall.txt | sudo tee -a /etc/network/interfaces"
+    end
+    # Additional configuration for firewall 2, allowing communication with app and db servers
+  end
+
+  # Database Server
+  config.vm.define "db_server" do |db_config|
+    db_config.vm.box = "kalilinux/rolling"
+
+    db_config.vm.provision "shell" do |shell|
+      shell.inline = "cat /vagrant/interfaces/database_server.txt | sudo tee -a /etc/network/interfaces"
+    end
+    # Additional configuration for the database server, if needed
+  end
+end
