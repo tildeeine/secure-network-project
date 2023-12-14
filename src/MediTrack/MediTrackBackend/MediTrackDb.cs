@@ -16,6 +16,11 @@ public class MediTrackDb : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // modelBuilder
+        // .Entity<Patient>()
+        // .Property(p => p.Sex)
+        // .HasConversion<string>(v => v.ToString(), v => v.ToString());
+
         modelBuilder.Entity<Patient>().HasData(
                 new Patient
                 {
@@ -47,8 +52,10 @@ public record Patient
     public string Name { get; init; } = null!;
     [RegularExpression(@"\d{9}", ErrorMessage = "NIC number should be a 9 digit number.")]
     public string NIC { get; init; } = null!;
+
     [Column(TypeName = "nvarchar(24)")]
     public SexType Sex { get; init; }
+
     public string DateOfBirth { get; init; } = null!;
     public string BloodType { get; init; } = null!;// should be enum?
     public List<string> KnownAllergies { get; init; } = new();
