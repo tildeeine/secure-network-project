@@ -1,0 +1,14 @@
+{
+  "patient": {
+    "id": -1,
+    "name": "Bob",
+    "nic": "000000000",
+    "sex": "0",
+    "dateOfBirth": "2001-07-21",
+    "bloodType": "O-",
+    "knownAllergies": [
+      "Chocolate"
+    ],
+    "consultationRecords": []
+  }
+}

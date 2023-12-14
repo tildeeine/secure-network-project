@@ -1,15 +1,19 @@
 using Xunit;
 using System.Security.Cryptography;
 using System.Text.Json.Nodes;
+using System.Text;
 
 namespace CryptoLib.Tests;
 
 public class CryptoLibTests
 {
-    [Fact]
-    public void Test1()
+    // [Fact]
+    [Theory]
+    [InlineData("./input.json")]
+    [InlineData("./backend-input.json")]
+    public void Test1(string path)
     {
-        string jsonString = File.ReadAllText("./input.json");
+        string jsonString = File.ReadAllText(path);
         JsonNode? inputData = JsonNode.Parse(jsonString);
         Assert.NotNull(inputData);
 

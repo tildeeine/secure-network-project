@@ -22,7 +22,7 @@
     <ProjectReference Include="..\CryptoLib\CryptoLib.csproj"></ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="./input.json">
+    <Content Include="./*.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
