@@ -28,10 +28,13 @@ public class Crypto
     {
         try
         {
+            // rsa.ImportFromPem(authKey);
+            // byte[] hash = rsa.SignData(JsonSerializer.SerializeToUtf8Bytes(data), SHA256.Create());
+            // Console.WriteLine($"Data before: {data} {Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(data))}");
+            byte[] hash = Crypto.SignData(JsonSerializer.SerializeToUtf8Bytes(data), authKey);
+
             using RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
             using Aes aes = Aes.Create();
-            rsa.ImportFromPem(authKey);
-            byte[] hash = rsa.SignData(JsonSerializer.SerializeToUtf8Bytes(data), SHA256.Create());
 
             rsa.ImportFromPem(encryptionKey);
             aes.GenerateIV();
@@ -67,6 +70,8 @@ public class Crypto
             patient["dateOfBirth"] = EncryptToBase64(patient!["dateOfBirth"]!.ToString(), aes);
             patient["bloodType"] = EncryptToBase64(patient!["bloodType"]!.ToString(), aes);
 
+            // Console.WriteLine($"Hash: {Convert.ToBase64String(hash)}");
+            // Console.WriteLine($"Data: {data}");
             return [.. symmetric, .. hash, .. JsonSerializer.SerializeToUtf8Bytes(data)];
         }
         catch (Exception e)
@@ -136,6 +141,8 @@ public class Crypto
                 allergies[i] = DecryptFromBase64(allergie!.ToString(), aes);
                 i++;
             }
+            // Console.WriteLine($"Decrypted data: {objectData} {Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(objectData))}");
+            // Console.WriteLine($"Hash: {Convert.ToBase64String(data[..256])}");
             return [.. data[..256], .. JsonSerializer.SerializeToUtf8Bytes(objectData)];
         }
         catch (Exception e)
@@ -158,6 +165,7 @@ public class Crypto
         // TODO: Check for freshness too.
         try
         {
+            // Console.WriteLine($"check hash: {Convert.ToBase64String(signedData)}");
             using (RSACryptoServiceProvider rsa = new RSACryptoServiceProvider())
             {
                 rsa.ImportFromPem(key);
@@ -170,6 +178,20 @@ public class Crypto
             Console.WriteLine(e.Message);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Provides authenticity to the data.
+    /// </summary>
+    /// <param name="data"><c>data</c> you want to provide authenticity.</param>
+    /// <param name="key"><c>key</c> is the senders private key in Pem format.</param>
+    /// <returns> <c>hashed data</c>.</returns>
+    public static byte[] SignData(byte[] data, string key)
+    {
+
+        using RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
+        rsa.ImportFromPem(key);
+        return rsa.SignData(data, SHA256.Create());
     }
 
     private static string EncryptToBase64(string value, Aes aes) => Convert.ToBase64String(aes.EncryptCbc(Encoding.UTF8.GetBytes(value), aes.IV));
