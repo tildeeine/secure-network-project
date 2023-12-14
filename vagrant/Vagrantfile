@@ -11,7 +11,10 @@ Vagrant.configure("2") do |config|
     fw1_config.vm.network "public_network", type: "dhcp", name: "eth0" # Internet access
 
     fw1_config.vm.provision "shell" do |shell|
-      shell.inline = "cat /vagrant/interfaces/external_firewall.txt | sudo tee -a /etc/network/interfaces"
+      shell.inline = <<-SHELL
+      chmod +x /vagrant/init_scripts/init-fw1.sh
+      /vagrant/init_scripts/init-fw1.sh
+    SHELL
     end
     # Additional configuration for firewall 1, allowing internet access and communication with the app server
   end
@@ -21,7 +24,10 @@ Vagrant.configure("2") do |config|
     app_config.vm.box = "kalilinux/rolling"
 
     app_config.vm.provision "shell" do |shell|
-      shell.inline = "cat /vagrant/interfaces/application_server.txt | sudo tee -a /etc/network/interfaces"
+      shell.inline = <<-SHELL
+      chmod +x /vagrant/init_scripts/init-app-server.sh
+      /vagrant/init_scripts/init-app-server.sh
+    SHELL
     end
     # Additional configuration for the application server, if needed
   end
@@ -31,7 +37,10 @@ Vagrant.configure("2") do |config|
     fw2_config.vm.box = "kalilinux/rolling"
 
     fw2_config.vm.provision "shell" do |shell|
-      shell.inline = "cat /vagrant/interfaces/internal_firewall.txt | sudo tee -a /etc/network/interfaces"
+      shell.inline = <<-SHELL
+      chmod +x /vagrant/init_scripts/init-fw2.sh
+      /vagrant/init_scripts/init-fw2.sh
+    SHELL
     end
     # Additional configuration for firewall 2, allowing communication with app and db servers
   end
@@ -41,7 +50,10 @@ Vagrant.configure("2") do |config|
     db_config.vm.box = "kalilinux/rolling"
 
     db_config.vm.provision "shell" do |shell|
-      shell.inline = "cat /vagrant/interfaces/database_server.txt | sudo tee -a /etc/network/interfaces"
+      shell.inline = <<-SHELL
+      chmod +x /vagrant/init_scripts/init-db-server.sh
+      /vagrant/init_scripts/init-db-server.sh
+    SHELL
     end
     # Additional configuration for the database server, if needed
   end
