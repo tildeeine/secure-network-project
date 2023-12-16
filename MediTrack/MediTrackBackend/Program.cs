@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,6 +61,7 @@ GwIDAQAB
 -----END PUBLIC KEY-----";
 
 HashSet<int> messageIds = new();
+string AUTH_SERVER_URL = "http://localhost:5110";
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -83,10 +85,30 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// TODO: REMOVE THIS and enable ssl
+HttpClientHandler clientHandler = new HttpClientHandler();
+clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+// Pass the handler to httpclient(from you are calling api)
+using HttpClient client = new HttpClient(clientHandler);
+
 app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string nic) =>
 {
-    // TODO: Get nic from physician and prove that he sent this message.
-    // message blob on body
+    var response = await client.GetAsync($"{AUTH_SERVER_URL}/{nic}");
+
+    if (response.StatusCode != HttpStatusCode.OK)
+    {
+        Console.WriteLine("[Error] Auth Server Request Failed.");
+        return Results.StatusCode(500);
+    }
+
+    PhycisianDTO? physician = await response.Content.ReadFromJsonAsync<PhycisianDTO>();
+    if (physician is null)
+    {
+        Console.WriteLine("[Error] Auth Server PhysicianDTO failed.");
+        return Results.StatusCode(500);
+    }
+
+    Console.WriteLine($"Received {physician}");
 
     // Ensure authenticity of request using physician public key
     request.EnableBuffering();
@@ -94,7 +116,7 @@ app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string
     reader.BaseStream.Seek(0, SeekOrigin.Begin);
     byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
 
-    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(nic), rsaClientPublicKey))
+    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(nic), physician.PublicKey))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
         return Results.BadRequest();
@@ -102,20 +124,36 @@ app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string
 
     var patient = await db.Patients.Where(v => v.NIC == nic).FirstOrDefaultAsync();
 
-    if (patient is null){
+    if (patient is null)
+    {
         Console.WriteLine($"[Error]: Failed to get patient with {nic}");
         return Results.BadRequest();
     }
+
+    Console.WriteLine($"Requested patient: {patient}");
+
+    ProtectClassifiedRecords(patient, physician.Speciality);
+
+    Console.WriteLine($"Requested patient [after]: {patient}");
+
+    var patientDto = new PatientDTO
+    (
+        patient.Name,
+        patient.NIC,
+        patient.Sex.ToString(),
+        patient.BloodType,
+        patient.DateOfBirth,
+        patient.KnownAllergies,
+        patient.ConsultationRecords
+    );
 
     string patientObj = JsonSerializer.Serialize(patient, new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     });
 
-    JsonNode node = JsonNode.Parse($"{{\"patient\": {patientObj}}}")!;
 
-    node["patient"]!["sex"] = Enum.GetName<SexType>(Enum.Parse<SexType>(node["patient"]!["sex"]!.ToString()));
-    var bytes = Crypto.Protect(node, rsaClientPublicKey, rsaServerPrivateKey);
+    var bytes = Crypto.Protect(JsonNode.Parse($"{{\"patient\": {patientObj}}}")!, rsaClientPublicKey, rsaServerPrivateKey);
     if (bytes is null)
     {
         Console.WriteLine("[Error]: Protection failed.");
@@ -125,6 +163,29 @@ app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string
     // Console.WriteLine(Encoding.UTF8.GetString(bytes));
     return Results.Bytes(bytes);
 });
+
+void ProtectClassifiedRecords(Patient patient, string PhysicianSpeciality)
+{
+    using Aes aes = Aes.Create();
+    aes.GenerateIV();
+    aes.GenerateKey();
+
+    foreach (var (consultation, id) in patient.ConsultationRecords.Select((v, i) => (v, i)))
+    {
+        if (consultation.MedicalSpeciality != PhysicianSpeciality)
+        {
+            patient.ConsultationRecords[id] = consultation with
+            {
+                Date = Crypto.EncryptToBase64(consultation.DoctorName, aes),
+                MedicalSpeciality = Crypto.EncryptToBase64(consultation.MedicalSpeciality, aes),
+                DoctorName = Crypto.EncryptToBase64(consultation.DoctorName, aes),
+                Practice = Crypto.EncryptToBase64(consultation.Practice, aes), // should be enum?
+                TreatmentSummary = Crypto.EncryptToBase64(consultation.TreatmentSummary, aes),
+                PhysicianSignature = Crypto.EncryptToBase64(consultation.PhysicianSignature, aes)
+            };
+        }
+    }
+}
 // app.MapGet("/patients/{id}", async (MediTrackDb db, int id) => await db.Patients.FindAsync(id));
 //.WithName("GetWeatherForecast")
 //.WithOpenApi();
