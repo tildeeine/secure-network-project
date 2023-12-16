@@ -27,12 +27,16 @@ app.UseHttpsRedirection();
 
 app.MapGet("/{nic}", async (AuthServerDb db, string nic) =>
 {
-	var physician = await db.Physicians.Where(v => v.NIC == nic).FirstOrDefaultAsync();
-	if (physician is null)
-        	return Results.BadRequest("Physician not found");
-        
-	return Results.Ok(physician.PublicKey);
+    var physician = await db.Physicians.Where(v => v.NIC == nic).FirstOrDefaultAsync();
+    if (physician is null)
+        return Results.BadRequest("Physician not found");
+
+    var jsonObj = new JsonObject{
+        {"publicKey", physician.PublicKey},
+        {"speciality", physician.Speciality }
+    };
+    return Results.Ok(jsonObj);
 });
 //app.MapGet("/", () => "Hello World!");
 
-app.Run();
+app.Run();
