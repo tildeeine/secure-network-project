@@ -31,6 +31,8 @@ public class Crypto
             // rsa.ImportFromPem(authKey);
             // byte[] hash = rsa.SignData(JsonSerializer.SerializeToUtf8Bytes(data), SHA256.Create());
             // Console.WriteLine($"Data before: {data} {Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(data))}");
+
+
             byte[] hash = Crypto.SignData(JsonSerializer.SerializeToUtf8Bytes(data), authKey);
 
             using RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();
@@ -41,37 +43,8 @@ public class Crypto
             aes.GenerateKey();
             byte[] symmetric = rsa.Encrypt([.. aes.Key, .. aes.IV], false);
 
-            JsonNode patient = data["patient"]!;
-            JsonArray allergies = patient["knownAllergies"]!.AsArray();
-            JsonArray consultationRecords = patient["consultationRecords"]!.AsArray();
-
-            int i = 0;
-            foreach (var consultation in consultationRecords.ToList())
-            {
-                consultationRecords[i] = new JsonObject
-                {
-                    ["date"] = EncryptToBase64(consultation!["date"]!.ToString(), aes),
-                    ["medicalSpeciality"] = EncryptToBase64(consultation!["medicalSpeciality"]!.ToString(), aes),
-                    ["doctorName"] = EncryptToBase64(consultation!["doctorName"]!.ToString(), aes),
-                    ["practice"] = EncryptToBase64(consultation!["practice"]!.ToString(), aes),
-                    ["treatmentSummary"] = EncryptToBase64(consultation!["treatmentSummary"]!.ToString(), aes),
-                };
-                i++;
-            }
-            i = 0;
-            foreach (var allergie in allergies.ToList())
-            {
-                allergies[i] = EncryptToBase64(allergie!.ToString(), aes);
-                i++;
-            }
-
-            patient["name"] = EncryptToBase64(patient!["name"]!.ToString(), aes);
-            patient["sex"] = EncryptToBase64(patient!["sex"]!.ToString(), aes);
-            patient["dateOfBirth"] = EncryptToBase64(patient!["dateOfBirth"]!.ToString(), aes);
-            patient["bloodType"] = EncryptToBase64(patient!["bloodType"]!.ToString(), aes);
-
-            // Console.WriteLine($"Hash: {Convert.ToBase64String(hash)}");
-            // Console.WriteLine($"Data: {data}");
+            ProcessJsonValues(data, aes, true);
+            // Console.WriteLine($"Data after encrypt : {data}");
             return [.. symmetric, .. hash, .. JsonSerializer.SerializeToUtf8Bytes(data)];
         }
         catch (Exception e)
@@ -80,6 +53,7 @@ public class Crypto
             return null;
         }
     }
+
 
 
 
@@ -111,38 +85,7 @@ public class Crypto
             aes.Key = header[..32];
             aes.IV = header[32..];
 
-
-            JsonNode objectData = JsonNode.Parse(data[256..])!; // Skip hash bytes
-            JsonNode patient = objectData["patient"]!;
-
-            patient["name"] = DecryptFromBase64(patient!["name"]!.ToString(), aes);
-            patient["sex"] = DecryptFromBase64(patient!["sex"]!.ToString(), aes);
-            patient["dateOfBirth"] = DecryptFromBase64(patient!["dateOfBirth"]!.ToString(), aes);
-            patient["bloodType"] = DecryptFromBase64(patient!["bloodType"]!.ToString(), aes);
-
-            int i = 0;
-            JsonArray consultationRecords = patient["consultationRecords"]!.AsArray();
-            foreach (var consultation in consultationRecords.ToList())
-            {
-                consultationRecords[i] = new JsonObject
-                {
-                    ["date"] = DecryptFromBase64(consultation!["date"]!.ToString(), aes),
-                    ["medicalSpeciality"] = DecryptFromBase64(consultation!["medicalSpeciality"]!.ToString(), aes),
-                    ["doctorName"] = DecryptFromBase64(consultation!["doctorName"]!.ToString(), aes),
-                    ["practice"] = DecryptFromBase64(consultation!["practice"]!.ToString(), aes),
-                    ["treatmentSummary"] = DecryptFromBase64(consultation!["treatmentSummary"]!.ToString(), aes),
-                };
-                i++;
-            }
-            i = 0;
-            JsonArray allergies = patient["knownAllergies"]!.AsArray();
-            foreach (var allergie in allergies.ToList())
-            {
-                allergies[i] = DecryptFromBase64(allergie!.ToString(), aes);
-                i++;
-            }
-            // Console.WriteLine($"Decrypted data: {objectData} {Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(objectData))}");
-            // Console.WriteLine($"Hash: {Convert.ToBase64String(data[..256])}");
+            JsonNode objectData = ProcessJsonValues(JsonNode.Parse(data[256..])!/* Skip hash bytes*/, aes, false);
             return [.. data[..256], .. JsonSerializer.SerializeToUtf8Bytes(objectData)];
         }
         catch (Exception e)
@@ -194,6 +137,38 @@ public class Crypto
         return rsa.SignData(data, SHA256.Create());
     }
 
-    private static string EncryptToBase64(string value, Aes aes) => Convert.ToBase64String(aes.EncryptCbc(Encoding.UTF8.GetBytes(value), aes.IV));
-    private static string DecryptFromBase64(string value, Aes aes) => Encoding.UTF8.GetString(aes.DecryptCbc(Convert.FromBase64String(value), aes.IV));
+    private static JsonNode ProcessJsonValues(JsonNode data, Aes aes, bool encrypt)
+    {
+        if (data is JsonArray)
+        {
+            foreach (var value in data.AsArray().ToList())
+            {
+                Debug.Assert(value is not null);
+                if (value is JsonObject || value is JsonArray)
+                {
+                    // SerializeToNode is used to clear value parent; avoids value has parent error.
+                    data[value.GetElementIndex()] = ProcessJsonValues(JsonSerializer.SerializeToNode(value)!, aes, encrypt);
+                    continue;
+                }
+                data[value.GetElementIndex()] = encrypt ? EncryptToBase64(value.ToString(), aes) : DecryptFromBase64(value.ToString(), aes);
+            }
+        }
+        else if (data is JsonObject)
+        {
+            foreach (var (key, value) in data.AsObject().ToList())
+            {
+                Debug.Assert(value is not null);
+                if (value is JsonObject || value is JsonArray)
+                {
+                    // SerializeToNode is used to clear value parent; avoids value has parent error.
+                    data[key] = ProcessJsonValues(JsonSerializer.SerializeToNode(value)!, aes, encrypt);
+                    continue;
+                }
+                data[key] = encrypt ? EncryptToBase64(value.ToString(), aes) : DecryptFromBase64(value.ToString(), aes);
+            }
+        }
+        return data;
+    }
+    public static string EncryptToBase64(string value, Aes aes) => Convert.ToBase64String(aes.EncryptCbc(Encoding.UTF8.GetBytes(value), aes.IV));
+    public static string DecryptFromBase64(string value, Aes aes) => Encoding.UTF8.GetString(aes.DecryptCbc(Convert.FromBase64String(value), aes.IV));
 }
