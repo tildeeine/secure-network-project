@@ -39,26 +39,26 @@ PpsqM8NgVcNAA9TPAzKPq6vN2svbOhj1zEm+DO2zUgRNWwO1GW6x6v3iP1vwI8KL
 cgwvI9KD55ah77I6u7ZG/Yo=
 -----END PRIVATE KEY-----";
 
-var rsaServerPublicKey = @"-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs/0S3fRK58o7ykUZI3cm
-f+OswwKgbGb3C/yTUa2QGXIYhJLz034jrr7Pw/KVnaF/4aRCMg/NpDQPlEAS3M8m
-m3BtQSldNbT4xHVk25poO/HA0IcRYClupnsbedD9u0SiOM7WOvQnVewbC7BBl2oD
-TUtRrADL62Wq/A92RSwBMrVo/YhYbSvwqdsOOij41rWZlBRL31H1v2MHEICqFibT
-sIYgTRR4xnpjsJsWqAJpZWrbraFxVpk/zQ4V7/Vdg6dvPhRgSCNSpzWILR12qDoB
-K7FlN82qGCKm3MNehyPkASftMb/2VNvWfqmiikBw7H0+ZPyKt7d82HYTJomC30gb
-vwIDAQAB
------END PUBLIC KEY-----";
+// var rsaServerPublicKey = @"-----BEGIN PUBLIC KEY-----
+// MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs/0S3fRK58o7ykUZI3cm
+// f+OswwKgbGb3C/yTUa2QGXIYhJLz034jrr7Pw/KVnaF/4aRCMg/NpDQPlEAS3M8m
+// m3BtQSldNbT4xHVk25poO/HA0IcRYClupnsbedD9u0SiOM7WOvQnVewbC7BBl2oD
+// TUtRrADL62Wq/A92RSwBMrVo/YhYbSvwqdsOOij41rWZlBRL31H1v2MHEICqFibT
+// sIYgTRR4xnpjsJsWqAJpZWrbraFxVpk/zQ4V7/Vdg6dvPhRgSCNSpzWILR12qDoB
+// K7FlN82qGCKm3MNehyPkASftMb/2VNvWfqmiikBw7H0+ZPyKt7d82HYTJomC30gb
+// vwIDAQAB
+// -----END PUBLIC KEY-----";
 
 
-var rsaClientPublicKey = @"-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzfCcokPXokxohfB2foWl
-0gcr2Jc6TnEH2M9MTHXhWrvv4toH+wC9Ti7WAMVUYRx8Z7bDUeU/IV+dtaWwrsXG
-uupqLI89IKciGmAv9NCHuOrcpRte5QW+eJHp+W8kpESHZJFWqPXAKJoP3FTmtxwi
-Hm++hvCXlYW3f0FZrsJ5hBLHK1lw+PoEpwUSuqCGfvwCeYmoyfYtvZgzTE5KIJvE
-X+1o5RRuIN1nYd7uA2oF1Ts42qw0lXvKz6QXLXhaL7DpNbISMmaIK1RbwC6jGvC9
-3U86Xzg7csSyvLiB5UpA6ZbNezmNqabRE1TyDy9/VuDx4oTXDa6jkFctW31vbGCS
-GwIDAQAB
------END PUBLIC KEY-----";
+// var rsaClientPublicKey = @"-----BEGIN PUBLIC KEY-----
+// MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzfCcokPXokxohfB2foWl
+// 0gcr2Jc6TnEH2M9MTHXhWrvv4toH+wC9Ti7WAMVUYRx8Z7bDUeU/IV+dtaWwrsXG
+// uupqLI89IKciGmAv9NCHuOrcpRte5QW+eJHp+W8kpESHZJFWqPXAKJoP3FTmtxwi
+// Hm++hvCXlYW3f0FZrsJ5hBLHK1lw+PoEpwUSuqCGfvwCeYmoyfYtvZgzTE5KIJvE
+// X+1o5RRuIN1nYd7uA2oF1Ts42qw0lXvKz6QXLXhaL7DpNbISMmaIK1RbwC6jGvC9
+// 3U86Xzg7csSyvLiB5UpA6ZbNezmNqabRE1TyDy9/VuDx4oTXDa6jkFctW31vbGCS
+// GwIDAQAB
+// -----END PUBLIC KEY-----";
 
 HashSet<int> messageIds = new();
 string AUTH_SERVER_URL = "http://localhost:5110";
@@ -91,9 +91,9 @@ clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, 
 // Pass the handler to httpclient(from you are calling api)
 using HttpClient client = new HttpClient(clientHandler);
 
-app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string nic) =>
+app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db, string patientNIC, string doctorNIC) =>
 {
-    var response = await client.GetAsync($"{AUTH_SERVER_URL}/{nic}");
+    var response = await client.GetAsync($"{AUTH_SERVER_URL}/{doctorNIC}");
 
     if (response.StatusCode != HttpStatusCode.OK)
     {
@@ -116,17 +116,17 @@ app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string
     reader.BaseStream.Seek(0, SeekOrigin.Begin);
     byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
 
-    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(nic), physician.PublicKey))
+    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(doctorNIC), physician.PublicKey))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
         return Results.BadRequest();
     }
 
-    var patient = await db.Patients.Where(v => v.NIC == nic).FirstOrDefaultAsync();
+    var patient = await db.Patients.Where(v => v.NIC == patientNIC).FirstOrDefaultAsync();
 
     if (patient is null)
     {
-        Console.WriteLine($"[Error]: Failed to get patient with {nic}");
+        Console.WriteLine($"[Error]: Failed to get patient with {patientNIC}");
         return Results.BadRequest();
     }
 
@@ -153,7 +153,7 @@ app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string
     });
 
 
-    var bytes = Crypto.Protect(JsonNode.Parse($"{{\"patient\": {patientObj}}}")!, rsaClientPublicKey, rsaServerPrivateKey);
+    var bytes = Crypto.Protect(JsonNode.Parse($"{{\"patient\": {patientObj}}}")!, physician.PublicKey, rsaServerPrivateKey);
     if (bytes is null)
     {
         Console.WriteLine("[Error]: Protection failed.");
@@ -177,9 +177,10 @@ void ProtectClassifiedRecords(Patient patient, string PhysicianSpeciality)
         {
             patient.ConsultationRecords[i] = consultation with
             {
-                Date = Crypto.EncryptToBase64(consultation.DoctorName, aes),
-                MedicalSpeciality = Crypto.EncryptToBase64(consultation.MedicalSpeciality, aes),
                 DoctorName = Crypto.EncryptToBase64(consultation.DoctorName, aes),
+                NIC = Crypto.EncryptToBase64(consultation.NIC, aes),
+                Date = Crypto.EncryptToBase64(consultation.Date, aes),
+                MedicalSpeciality = Crypto.EncryptToBase64(consultation.MedicalSpeciality, aes),
                 Practice = Crypto.EncryptToBase64(consultation.Practice, aes), // should be enum?
                 TreatmentSummary = Crypto.EncryptToBase64(consultation.TreatmentSummary, aes),
                 PhysicianSignature = Crypto.EncryptToBase64(consultation.PhysicianSignature, aes)
