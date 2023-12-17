@@ -116,7 +116,7 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
     reader.BaseStream.Seek(0, SeekOrigin.Begin);
     byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
 
-    if (!CryptoLib.Crypto.Check(data, [..Encoding.UTF8.GetBytes(doctorNIC), ..Encoding.UTF8.GetBytes(emergency.ToString())], physician.PublicKey))
+    if (!CryptoLib.Crypto.Check(data, [.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString())], physician.PublicKey))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
         return Results.BadRequest();
@@ -161,13 +161,64 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
     return Results.Bytes(bytes);
 });
 
+app.MapGet("/my-info/{NIC}", async (HttpRequest request, MediTrackDb db, string NIC) =>
+{
+
+    var patient = await db.Patients.Where(v => v.NIC == NIC).FirstOrDefaultAsync();
+
+    if (patient is null)
+    {
+        Console.WriteLine($"[Error]: Failed to get patient with {NIC}");
+        return Results.BadRequest();
+    }
+
+    // Ensure authenticity of request using patient public key
+    request.EnableBuffering();
+    using var reader = new StreamReader(request.Body, Encoding.UTF8);
+    reader.BaseStream.Seek(0, SeekOrigin.Begin);
+    byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
+
+    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(NIC), patient.PublicKey))
+    {
+        Console.WriteLine("[Error]: Message Auth Failed");
+        return Results.BadRequest();
+    }
+
+    var patientDto = new PatientDTO
+    (
+        patient.Name,
+        patient.NIC,
+        Enum.GetName<SexType>(patient.Sex)!,
+        patient.BloodType,
+        patient.DateOfBirth,
+        patient.KnownAllergies,
+        patient.ConsultationRecords
+    );
+
+    string patientObj = JsonSerializer.Serialize(patientDto, new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    });
+
+
+    var bytes = Crypto.Protect(JsonNode.Parse($"{{\"patient\": {patientObj}}}")!, patient.PublicKey, rsaServerPrivateKey);
+    if (bytes is null)
+    {
+        Console.WriteLine("[Error]: Protection failed.");
+        return Results.StatusCode(500);
+    }
+
+    // Console.WriteLine(Encoding.UTF8.GetString(bytes));
+    return Results.Bytes(bytes);
+});
+
 void ProtectClassifiedRecords(Patient patient, string PhysicianSpeciality)
 {
     using Aes aes = Aes.Create();
     aes.GenerateIV();
     aes.GenerateKey();
 
-    for (int i = 0; i < patient.ConsultationRecords.Count(); ++i )
+    for (int i = 0; i < patient.ConsultationRecords.Count(); ++i)
     {
         var consultation = patient.ConsultationRecords[i];
         if (consultation.MedicalSpeciality != PhysicianSpeciality)

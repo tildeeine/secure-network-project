@@ -43,7 +43,7 @@ class Program
 
     const string HELP_COMMAND_PATIENT = @$"Patient Commands: 
     help
-    get patient-civil-number(NIC) Get All patient info";
+    get Get All patient info";
 
     static string MEDITRACK_HOST = "http://localhost:5171";
     static string AUTH_SERVER_HOST = "http://localhost:5110";
@@ -153,13 +153,67 @@ class Program
                     }
                     else
                     {
-                        throw new NotImplementedException();
+                        switch (command_args[0])
+                        {
+                            case "get": // Patient Command
+                                await GetMyInfo(NIC, privateKey, publicKey, client);
+                                break;
+                            default:
+                                break;
+                        }
                     }
                     DisplayCommandHelp(mode);
                 }
                 break;
             case "help":
             default: DisplayHelp(); return;
+        }
+    }
+
+    private static async Task GetMyInfo(string nic, string privateKey, string publicKey, HttpClient client)
+    {
+        var request = new HttpRequestMessage
+        {
+            Method = HttpMethod.Get,
+            RequestUri = new Uri($"{MEDITRACK_HOST}/my-info/{nic}"),
+            // Sign your request content to prove authenticity
+            Content = new StringContent(Convert.ToBase64String(Crypto.SignData(Encoding.UTF8.GetBytes(nic), privateKey)))
+        };
+
+        var response = await client.SendAsync(request);
+
+        if (response.StatusCode != HttpStatusCode.OK)
+        {
+            Console.WriteLine("[Error] Bad Request.");
+            return;
+        }
+
+        var encryptedData = await response.Content.ReadAsByteArrayAsync();
+        var data = Crypto.Unprotect(encryptedData, privateKey);
+
+
+        if (data is null)
+        {
+            Console.WriteLine("[ERROR]: Unprotect was not successfull");
+            return;
+        }
+
+        // Check message authenticity
+        if (Crypto.Check(data[..256], data[256..], serverPublicKey))
+        {
+            var node = JsonNode.Parse(data[256..]);
+            Debug.Assert(node is not null, "Node is null");
+
+            Console.WriteLine($"Received Data: {node}");
+
+            await CheckConsultationRecordAuth(node, null, client);
+        }
+        else
+        {
+            Console.WriteLine("[Error]: Data was tampered with.");
+            Console.WriteLine($" Data: {Encoding.UTF8.GetString(data[256..])}\n {Convert.ToBase64String(data[256..])}");
+            // Console.WriteLine(Encoding.UTF8.GetString(encryptedData));
+            // Console.WriteLine("[Error]: Data was tampered with.");
         }
     }
 

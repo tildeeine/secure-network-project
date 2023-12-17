@@ -27,7 +27,15 @@ public class MediTrackDb : DbContext
                 BloodType = "O-",
                 KnownAllergies = new List<string> { "Chocolate" },
                 ConsultationRecords = new List<Consultation>() { },
-                PublicKey = "test" // TODO: Generatee
+                PublicKey = @"-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArzlh7J0ffHNn+aq2dijR
+LXs4MAGopAZhguwlvlWvWQ0uhPkONoz/Znda4RgAUmPSMbkGdnTT8rr8/7Imlwon
+i0n42U0i+UVJg12TObu7pTnVj5xsdsSu865r1d3fdVOSMAkDD183PILI6xzLKjoe
+CZtUTlg5oL5khL+cx9ofX3ofShMoYqQKpCK1bzstLQS53r05oFHG9YlbUHnGqGyH
+7J+kJgkIqjRHVV5Aoon8Lcd9zn85DP258QBgDyJNWA48ZE6k9XvnOtW587/SWRxW
+6DrJfwxvykuAFKS2t4mM/eeAxTiMo0nLLVBuAJ4QYkBqFP9/tB6dtBqRE/gYlINq
+pwIDAQAB
+-----END PUBLIC KEY-----"
             });
 
         modelBuilder.Entity<Patient>().OwnsMany(e => e.ConsultationRecords).HasData(
