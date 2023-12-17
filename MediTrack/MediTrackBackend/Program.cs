@@ -140,14 +140,14 @@ app.MapGet("/patients/{nic}", async (HttpRequest request, MediTrackDb db, string
     (
         patient.Name,
         patient.NIC,
-        patient.Sex.ToString(),
+        Enum.GetName<SexType>(patient.Sex)!,
         patient.BloodType,
         patient.DateOfBirth,
         patient.KnownAllergies,
         patient.ConsultationRecords
     );
 
-    string patientObj = JsonSerializer.Serialize(patient, new JsonSerializerOptions
+    string patientObj = JsonSerializer.Serialize(patientDto, new JsonSerializerOptions
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     });
@@ -170,11 +170,12 @@ void ProtectClassifiedRecords(Patient patient, string PhysicianSpeciality)
     aes.GenerateIV();
     aes.GenerateKey();
 
-    foreach (var (consultation, id) in patient.ConsultationRecords.Select((v, i) => (v, i)))
+    for (int i = 0; i < patient.ConsultationRecords.Count(); ++i )
     {
+        var consultation = patient.ConsultationRecords[i];
         if (consultation.MedicalSpeciality != PhysicianSpeciality)
         {
-            patient.ConsultationRecords[id] = consultation with
+            patient.ConsultationRecords[i] = consultation with
             {
                 Date = Crypto.EncryptToBase64(consultation.DoctorName, aes),
                 MedicalSpeciality = Crypto.EncryptToBase64(consultation.MedicalSpeciality, aes),

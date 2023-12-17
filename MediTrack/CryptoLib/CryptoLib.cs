@@ -28,11 +28,7 @@ public class Crypto
     {
         try
         {
-            // rsa.ImportFromPem(authKey);
-            // byte[] hash = rsa.SignData(JsonSerializer.SerializeToUtf8Bytes(data), SHA256.Create());
             // Console.WriteLine($"Data before: {data} {Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(data))}");
-
-
             byte[] hash = Crypto.SignData(JsonSerializer.SerializeToUtf8Bytes(data), authKey);
 
             using RSACryptoServiceProvider rsa = new RSACryptoServiceProvider();

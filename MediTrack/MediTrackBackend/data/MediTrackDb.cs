@@ -16,16 +16,6 @@ public class MediTrackDb : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // modelBuilder
-        // .Entity<Patient>()
-        // .Property(p => p.Sex)
-        // .HasConversion<string>(v => v.ToString(), v => v.ToString());
-
-        //   modelBuilder.Entity<Patient>().OwnsMany(m => m.OwnedTypes, ownedType =>
-        // {
-        //     ownedType.Property<int>("Id");
-        //     ownedType.HasKey("Id");
-        // });
         modelBuilder.Entity<Patient>().HasData(
             new Patient
             {
@@ -37,24 +27,6 @@ public class MediTrackDb : DbContext
                 BloodType = "O-",
                 KnownAllergies = new List<string> { "Chocolate" },
                 ConsultationRecords = new List<Consultation>() { },
-                // new Consultation(
-                //         0,
-                //         "2023-02-02",
-                //         "Mental",
-                //         "Joao",
-                //         "Clinica",
-                //         "Pomade",
-                //         "test" // TODO: GENERATE
-                //         ),
-                // new Consultation(
-                //         1,
-                //         "2023-02-02",
-                //         "Orthopedic",
-                //         "Manel",
-                //         "Clinica",
-                //         "Pomade",
-                //         "test" // TODO: GENERATE
-                // ,
                 PublicKey = "test" // TODO: Generatee
             });
 
@@ -62,7 +34,7 @@ public class MediTrackDb : DbContext
             new
             {
                 PatientId = -1, // patient id
-                Id = -1,
+                Id = -2,
                 Date = "2023-02-02",
                 MedicalSpeciality = "Orthopedic", // should be enum?
                 DoctorName = "Manel",
@@ -70,6 +42,17 @@ public class MediTrackDb : DbContext
                 TreatmentSummary = "Pomade",
                 PhysicianSignature = "teste"// base64
 
+            },
+            new
+            {
+                PatientId = -1, // patient id
+                Id = -1,
+                Date = "2023-02-02",
+                MedicalSpeciality = "Neuro", // should be enum?
+                DoctorName = "Joaquim",
+                Practice = "Clinica", // should be enum?
+                TreatmentSummary = "Pomade",
+                PhysicianSignature = "teste"// base64
             });
         base.OnModelCreating(modelBuilder);
     }
@@ -106,7 +89,14 @@ public record Patient
     public List<Consultation> ConsultationRecords { get; init; } = new();
 
     public string PublicKey { get; init; } = null!;
-}
+
+    public override string ToString()
+    {
+        return $"Name: {Name} NIC: {NIC} Sex: {Sex}, DateOfBirth: {DateOfBirth}, BloodType: {BloodType}," + 
+               $"{string.Join(' ', KnownAllergies.Select(v => v.ToString()))}\n" +
+               $"Consultation Records: {string.Join('\n', ConsultationRecords.Select(v => v.ToString()))}";
+    }
+};
 
 [Owned]
 public record Consultation(
