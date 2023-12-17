@@ -91,7 +91,7 @@ clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, 
 // Pass the handler to httpclient(from you are calling api)
 using HttpClient client = new HttpClient(clientHandler);
 
-app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db, string patientNIC, string doctorNIC) =>
+app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db, string patientNIC, string doctorNIC, bool emergency) =>
 {
     var response = await client.GetAsync($"{AUTH_SERVER_URL}/{doctorNIC}");
 
@@ -108,7 +108,7 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
         return Results.StatusCode(500);
     }
 
-    Console.WriteLine($"Received {physician}");
+    // Console.WriteLine($"Received {physician}");
 
     // Ensure authenticity of request using physician public key
     request.EnableBuffering();
@@ -116,7 +116,7 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
     reader.BaseStream.Seek(0, SeekOrigin.Begin);
     byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
 
-    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(doctorNIC), physician.PublicKey))
+    if (!CryptoLib.Crypto.Check(data, [..Encoding.UTF8.GetBytes(doctorNIC), ..Encoding.UTF8.GetBytes(emergency.ToString())], physician.PublicKey))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
         return Results.BadRequest();
@@ -130,11 +130,8 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
         return Results.BadRequest();
     }
 
-    Console.WriteLine($"Requested patient: {patient}");
-
-    ProtectClassifiedRecords(patient, physician.Speciality);
-
-    Console.WriteLine($"Requested patient [after]: {patient}");
+    if (!emergency)
+        ProtectClassifiedRecords(patient, physician.Speciality);
 
     var patientDto = new PatientDTO
     (

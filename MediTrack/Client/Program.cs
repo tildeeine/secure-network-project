@@ -38,7 +38,8 @@ class Program
 
     const string HELP_COMMAND_DOCTOR = @$"Doctor Commands: 
     help
-    get patient-civil-number(NIC) Attempt to get patient info";
+    get patient-civil-number(NIC) Attempt to get patient info
+    emergency patient-civil-number(NIC) Emergency situation, so the physician is able to get all medical records";
 
     const string HELP_COMMAND_PATIENT = @$"Patient Commands: 
     help
@@ -141,7 +142,10 @@ class Program
                         switch (command_args[0])
                         {
                             case "get": // Doctor Command
-                                await GetPatient(command_args[1], NIC, privateKey, publicKey, client);
+                                await GetPatient(command_args[1], NIC, privateKey, publicKey, client, false);
+                                break;
+                            case "emergency": // Doctor Command
+                                await GetPatient(command_args[1], NIC, privateKey, publicKey, client, true);
                                 break;
                             default:
                                 break;
@@ -159,16 +163,16 @@ class Program
         }
     }
 
-    private static async Task GetPatient(string patientNIC, string doctorNIC, string privateKey, string publicKey, HttpClient client)
+    private static async Task GetPatient(string patientNIC, string doctorNIC, string privateKey, string publicKey, HttpClient client, bool emergency)
     {
 
         // var doctorNIC = args[0];
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"{MEDITRACK_HOST}/patients/{patientNIC}?doctorNIC={doctorNIC}"),
+            RequestUri = new Uri($"{MEDITRACK_HOST}/patients/{patientNIC}?doctorNIC={doctorNIC}&emergency={emergency}"),
             // Sign your request content to prove authenticity
-            Content = new StringContent(Convert.ToBase64String(Crypto.SignData(Encoding.UTF8.GetBytes(doctorNIC), privateKey)))
+            Content = new StringContent(Convert.ToBase64String(Crypto.SignData([.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString())], privateKey)))
         };
 
         var response = await client.SendAsync(request);
@@ -195,11 +199,19 @@ class Program
             var node = JsonNode.Parse(data[256..]);
             Debug.Assert(node is not null, "Node is null");
 
+            string? speciality = null;
             Console.WriteLine($"Received Data: {node}");
-            PhycisianDTO? physician = await GetPhysicianInfo(doctorNIC, client); // Get our speciality
-            Debug.Assert(physician is not null, $"[Error]: Auth server doesn't have doctor record with {doctorNIC}");
 
-            CheckConsultationRecordAuth(node, physician.Speciality, client);
+            // If we are not in a emergency we only need to check for consultation
+            // records with our speciality.
+            if (!emergency)
+            {
+                PhycisianDTO? physician = (await GetPhysicianInfo(doctorNIC, client)); // Get our speciality
+                Debug.Assert(physician is not null, $"[Error]: Auth server doesn't have doctor record with {doctorNIC}");
+                speciality = physician.Speciality;
+            }
+
+            await CheckConsultationRecordAuth(node, speciality, client);
         }
         else
         {
@@ -222,7 +234,7 @@ class Program
         Console.WriteLine(HELP);
     }
 
-    private static async void CheckConsultationRecordAuth(JsonNode node, string? speciality, HttpClient client)
+    private static async Task CheckConsultationRecordAuth(JsonNode node, string? speciality, HttpClient client)
     {
         List<ConsultationDTO>? consultationRecords = JsonSerializer.Deserialize<List<ConsultationDTO>>(node["patient"]!["consultationRecords"], new JsonSerializerOptions
         {
@@ -235,7 +247,6 @@ class Program
             return;
         }
 
-        Console.WriteLine(string.Join('\n', consultationRecords.Select(v => v.ToString())));
         for (int i = 0; i < consultationRecords.Count(); ++i)
         {
             ConsultationDTO consultation = consultationRecords[i];
@@ -259,7 +270,7 @@ class Program
                         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                     }),
                     physician.PublicKey);
-                Console.WriteLine($"Checking auth for consultationRecord: {consultation}\nResult: {result}");
+                Console.WriteLine($"Checking auth for consultationRecord: {i}\nResult: {result}");
             }
         }
 
