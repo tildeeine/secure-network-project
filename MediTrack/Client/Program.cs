@@ -39,11 +39,13 @@ class Program
     const string HELP_COMMAND_DOCTOR = @$"Doctor Commands: 
     help
     get patient-civil-number(NIC) Attempt to get patient info
-    emergency patient-civil-number(NIC) Emergency situation, so the physician is able to get all medical records";
+    emergency patient-civil-number(NIC) Emergency situation, so the physician is able to get all medical records
+    change Changes to patient mode";
 
     const string HELP_COMMAND_PATIENT = @$"Patient Commands: 
     help
-    get Get All patient info";
+    get Get All patient info
+    change Changes to doctor mode";
 
     static string MEDITRACK_HOST = "http://localhost:5171";
     static string AUTH_SERVER_HOST = "http://localhost:5110";
@@ -147,6 +149,9 @@ class Program
                             case "emergency": // Doctor Command
                                 await GetPatient(command_args[1], NIC, privateKey, publicKey, client, true);
                                 break;
+                            case "change":
+                                mode = Mode.Patient;
+                                break;
                             default:
                                 break;
                         }
@@ -157,6 +162,9 @@ class Program
                         {
                             case "get": // Patient Command
                                 await GetMyInfo(NIC, privateKey, publicKey, client);
+                                break;
+                            case "change":
+                                mode = Mode.Doctor;
                                 break;
                             default:
                                 break;
