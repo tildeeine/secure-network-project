@@ -192,8 +192,13 @@ Vagrant.configure("2") do |config|
 
     client_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        chmod +x /vagrant/init-scripts/init-client-machine.sh
-        /vagrant/init-scripts/init-client-machine.sh
+        # Necessary installations
+        sudo apt update
+        sudo apt install -y dotnet-sdk-3.1
+
+        # Run the initial setup script
+        # chmod +x /vagrant/init-scripts/init-client-machine.sh
+        # /vagrant/init-scripts/init-client-machine.sh
 
         # Compile the Client code
         cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
