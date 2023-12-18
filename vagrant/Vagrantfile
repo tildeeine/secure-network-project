@@ -149,7 +149,7 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    auth_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling auth server code
     auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
@@ -185,7 +185,7 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    client_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling client code
     client_config.vm.synced_folder "../MediTrack/", "/MediTrack"
