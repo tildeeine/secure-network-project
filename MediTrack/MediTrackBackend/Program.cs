@@ -69,13 +69,14 @@ string AUTH_SERVER_URL = "http://localhost:5110";
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add db TODO: use real db
+// Configure DB
+var connectionString = "server=localhost;user=mysql;password=1234;database=meditrack";
 builder.Services.AddDbContext<MediTrackDb>(opt =>
-    opt.UseInMemoryDatabase("MediTrack"));
+    opt.UseMySql(
+        connectionString,
+        ServerVersion.AutoDetect(connectionString)));
 
 var app = builder.Build();
-
-//var db = app.Services.GetService<MediTrackDb>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -125,7 +126,7 @@ app.MapGet("/patients/{patientNIC}", async (
 
     if (!CryptoLib.Crypto.CheckWithFreshness(
         data,
-        [.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString()), ..Encoding.UTF8.GetBytes(id.ToString())],
+        [.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString()), .. Encoding.UTF8.GetBytes(id.ToString())],
         physician.PublicKey,
         id,
         messageIds.GetValueOrDefault(doctorNIC)))
@@ -198,8 +199,8 @@ app.MapGet("/my-info/{NIC}", async (HttpRequest request, MediTrackDb db, string 
     if (!CryptoLib.Crypto.CheckWithFreshness(
         data,
         [.. Encoding.UTF8.GetBytes(NIC), .. Encoding.UTF8.GetBytes(id.ToString())],
-        patient.PublicKey, 
-        id, 
+        patient.PublicKey,
+        id,
         messageIds.GetValueOrDefault(NIC)))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
