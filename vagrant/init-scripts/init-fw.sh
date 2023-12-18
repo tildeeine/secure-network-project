@@ -11,9 +11,6 @@ sudo ip link set dev eth1 up
 # Activate IP forwarding
 sudo sysctl net.ipv4.ip_forward=1
 
-# Set up NAT to let AS access the internet
-sudo iptables -t nat -F            # Flushes all the rules from table NAT
-sudo iptables -t nat -A POSTROUTING  -o eth2 -j MASQUERADE    # Creates a source NAT on interface eth2
 
 # ! edit the corresponding /etc/network/interfaces file.
 
@@ -26,15 +23,15 @@ sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw enable
 
+# Set up NAT to let AS access the internet
+sudo ufw route allow in on eth2 out on any from any to any
+
 # Allow loopback interface
 sudo ufw allow in on lo
 sudo ufw allow out on lo
 
-# Allow HTTP connections from external machines (Auth and Client)
-sudo ufw allow in on eth2 to any port 80
-
-# !Redirect all HTTP connections to the AS
-sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT --to-destination 192.168.0.20:80
+# Redirect all HTTP connections to the AS
+sudo ufw route allow in on eth0 from any to any port 80 to 192.168.0.20 port 80
 
 # Allow TLS/SSL connections from AS to the DB
 sudo ufw allow in on eth0 from 192.168.0.20 to 192.168.1.30 port 443
