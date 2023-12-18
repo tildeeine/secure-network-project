@@ -1,7 +1,14 @@
 #!/bin/bash
 
 # Update package repositories
-sudo apt update
+sudo apt-get update
+
+# Install .NET SDK
+sudo apt-get install -y dotnet-sdk-5.0
+
+# Install iptables
+sudo apt-get install -y iptables 
+sudo apt-get install -y iptables-persistent
 
 # Configure NAT
 iptables -t nat -F

@@ -1,14 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 
-# Update package repositories
-sudo apt update
+# VMSETTINGS: Adapter1, internal network, sw-1, promiscuous mode allow VMs. 
 
-# Configure network interfaces
-sudo ip addr add 192.168.0.20/24 dev eth0
+sudo ifconfig eth0 192.168.0.20/24 up
 
-# Install .NET SDK
-sudo apt-get update
-sudo apt-get install -y dotnet-sdk-5.0
+# Set External Firewall as default gateway
+sudo ip route add default via 192.168.0.10
 
-# Restart networking service
-sudo systemctl restart networking
+# Restart to apply changes
+sudo systemctl restart NetworkManager
+
+# ! edit the corresponding /etc/network/interfaces file.

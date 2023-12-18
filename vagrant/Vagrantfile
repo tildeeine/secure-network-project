@@ -7,11 +7,6 @@ ENV['VAGRANT_DEFAULT_PROVIDER'] = "virtualbox"
 Vagrant.configure("2") do |config|
   # Base configuration for all VMs
 
-  # Disable vbox GUI
-  config.vm.provider "virtualbox" do |vb|
-    vb.gui = false
-  end
-
   # Disable VirtualBox Guest Additions auto-update
   config.vbguest.auto_update = false
 
@@ -19,33 +14,9 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder ".", "/vagrant"
 
   # Individual VM configurations
-
-  # Firewall Server VM
-  config.vm.define "firewall" do |fw_config|
-    fw_config.vm.box = "ubuntu/trusty64"
-    fw_config.vm.hostname = "a31-MediTrack-firewall-server"
-
-    # VM name
-    fw_config.vm.provider "virtualbox" do |vb|
-      vb.gui = false
-      vb.name = "a31-MediTrack-firewall-server"
-    end
-
-    # Internet access
-    fw_config.vm.network "public_network", type: "dhcp", name: "eth2", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz" #!! Remove bridge specification when running on other host devices
-
-    fw_config.vm.provision "shell" do |shell|
-      shell.inline = <<-SHELL
-        # dos2unix /vagrant/init-scripts/init-fw.sh
-        chmod +x /vagrant/init-scripts/init-fw.sh
-        /vagrant/init-scripts/init-fw.sh
-      SHELL
-    end
-  end
-
   # Application Server VM
   config.vm.define "app_server" do |app_config|
-    app_config.vm.box = "ubuntu/trusty64"
+    app_config.vm.box = "generic/ubuntu2304"
     app_config.vm.hostname = "a31-MediTrack-app-server"
 
     # VM name
@@ -54,35 +25,91 @@ Vagrant.configure("2") do |config|
       vb.name = "a31-MediTrack-app-server"
     end
 
-    # Create shared folder for compiling app server code. Needs all of MediTrack, as it uses the crytpto library as well as MediTrack backend
+    # Create shared folder for compiling app server code.
     app_config.vm.synced_folder "../MediTrack", "/MediTrack"
+
+    # Enable temporary internet access for installing .NET
+    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        dos2unix /vagrant/init-scripts/init-app-server.sh
+        # Do necessary installations
+        sudo apt update
+        sudo apt install -y dotnet-sdk-3.1
+      SHELL
+    end
+
+    # Disable NAT for internet access
+    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, disabled: true
+
+    # Internal Network sw-1
+    app_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-1", auto_config: false
+    # Enable Promiscuous Mode for sw-1
+    app_config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    app_config.vm.provision "shell" do |shell|
+      shell.inline = <<-SHELL
+        # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
+        cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && cd ../..
+
+        # Start running the program
+        ./MediTrackApp/MediTrackBackend
+
+        # Run the initial setup script
         chmod +x /vagrant/init-scripts/init-app-server.sh
         /vagrant/init-scripts/init-app-server.sh
+      SHELL
+    end
+  end
 
-        # Compile and run the Crypto library
-        cd /MediTrack/CryptoLib
-        dotnet publish -o ../../CryptoLibApp
-        /CryptoLibApp/CryptoLib
 
-        # Compile and run the app server code
-        cd ../MediTrackBackend
-        dotnet publish -o ../../MediTrackApp
-        cd ../..
-        /MediTrackApp/MediTrack
+  # Firewall Server VM
+  config.vm.define "firewall" do |fw_config|
+    fw_config.vm.box = "generic/ubuntu2304"
+    fw_config.vm.hostname = "a31-MediTrack-firewall-server"
 
-        # Remove the shared folder
-        rm -rf /MediTrack
+    # VM name
+    fw_config.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.name = "a31-MediTrack-firewall-server"
+    end
+
+    # Internal Network sw-1
+    fw_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-1", auto_config: false
+    # Enable Promiscuous Mode for sw-1
+    fw_config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    # Internal Network sw-2
+    fw_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-2", auto_config: false
+    # Enable Promiscuous Mode for sw-2
+    fw_config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
+    end
+
+    # Internet access
+    fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+
+    fw_config.vm.provision "shell" do |shell|
+      shell.inline = <<-SHELL
+        # Do necessary installations
+        sudo apt update
+        sudo apt install iptables -y
+        sudo apt install iptables-persistent -y
+
+        # Run initial setup script
+        chmod +x /vagrant/init-scripts/init-fw.sh
+        /vagrant/init-scripts/init-fw.sh
       SHELL
     end
   end
 
   # Database Server VM
   config.vm.define "db_server" do |db_config|
-    db_config.vm.box = "ubuntu/trusty64"
+    db_config.vm.box = "generic/ubuntu2304"
     db_config.vm.hostname = "a31-MediTrack-db-server"
 
     # VM name
@@ -91,9 +118,19 @@ Vagrant.configure("2") do |config|
       vb.name = "a31-MediTrack-db-server"
     end
 
+    # Internal Network sw-2
+    db_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-2", auto_config: false
+    # Enable Promiscuous Mode for sw-2
+    db_config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
     db_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        dos2unix /vagrant/init-scripts/init-db-server.sh
+        # Might need
+        # sudo apt-get install -y mysql-server
+
+        # Run initial setup script
         chmod +x /vagrant/init-scripts/init-db-server.sh
         /vagrant/init-scripts/init-db-server.sh
       SHELL
@@ -102,7 +139,7 @@ Vagrant.configure("2") do |config|
 
   # Authentication Server
   config.vm.define "auth_server" do |auth_config|
-    auth_config.vm.box = "ubuntu/trusty64"
+    auth_config.vm.box = "generic/ubuntu2304"
     auth_config.vm.hostname = "a31-MediTrack-auth-server"
 
     # VM name
@@ -112,35 +149,33 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    auth_config.vm.network "public_network", type: "dhcp", name: "eth0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz" #!! Remove bridge specification when running on other host devices
+    fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling auth server code
     auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
 
     auth_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        #Run the initial setup script
-        dos2unix /vagrant/init-scripts/init-auth-server.sh
-        chmod +x /vagrant/init-scripts/init-auth-server.sh
-        /vagrant/init-scripts/init-auth-server.sh
+        # Necessary installations
+        sudo apt update
+        sudo apt install -y dotnet-sdk-3.1
 
-        # Compile the auth server code
-        cd /AuthServer
-        dotnet publish -o ../AuthServerApp
+        # Change to the AuthServer directory, publish the .NET program, and change back to the parent directory
+        cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
 
         # Start running the program
-        cd ..
         ./AuthServerApp/AuthServer
 
-        # Remove the shared folder
-        rm -rf /AuthServer
+        #Run the initial setup script #! No actual content in this script
+        # chmod +x /vagrant/init-scripts/init-auth-server.sh
+        # /vagrant/init-scripts/init-auth-server.sh
       SHELL
     end
   end
 
   # Client Machine
   config.vm.define "client_machine" do |client_config|
-    client_config.vm.box = "ubuntu/trusty64"
+    client_config.vm.box = "generic/ubuntu2304"
     client_config.vm.hostname = "a31-MediTrack-client-machine"
 
     # VM name
@@ -150,29 +185,22 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    client_config.vm.network "public_network", type: "dhcp", name: "eth0", bridge: "Intel(R) Wi-Fi 6 AX201 160MHz" #!! Remove bridge specification when running on other host devices
+    fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling client code
-    client_config.vm.synced_folder "../MediTrack/Client", "/Client"
+    client_config.vm.synced_folder "../MediTrack/", "/MediTrack"
 
     client_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        dos2unix /vagrant/init-scripts/init-client-machine.sh
         chmod +x /vagrant/init-scripts/init-client-machine.sh
         /vagrant/init-scripts/init-client-machine.sh
 
         # Compile the Client code
-        cd /Client
-        dotnet publish -o ../ClientApp
+        cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
 
         # Start running the program
-        cd ..
         ./ClientApp/Client
-
-        # Remove the shared folder
-        rm -rf /Client
       SHELL
     end
   end
-
 end
