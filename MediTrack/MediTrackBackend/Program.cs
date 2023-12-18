@@ -60,7 +60,8 @@ cgwvI9KD55ah77I6u7ZG/Yo=
 // GwIDAQAB
 // -----END PUBLIC KEY-----";
 
-HashSet<int> messageIds = new();
+Dictionary<string, HashSet<int>> messageIds = new();
+
 string AUTH_SERVER_URL = "http://localhost:5110";
 
 // Add services to the container.
@@ -91,7 +92,13 @@ clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, 
 // Pass the handler to httpclient(from you are calling api)
 using HttpClient client = new HttpClient(clientHandler);
 
-app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db, string patientNIC, string doctorNIC, bool emergency) =>
+app.MapGet("/patients/{patientNIC}", async (
+    HttpRequest request,
+    MediTrackDb db,
+    string patientNIC,
+    string doctorNIC,
+    bool emergency,
+    int id) =>
 {
     var response = await client.GetAsync($"{AUTH_SERVER_URL}/{doctorNIC}");
 
@@ -116,11 +123,21 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
     reader.BaseStream.Seek(0, SeekOrigin.Begin);
     byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
 
-    if (!CryptoLib.Crypto.Check(data, [.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString())], physician.PublicKey))
+    if (!CryptoLib.Crypto.CheckWithFreshness(
+        data,
+        [.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString()), ..Encoding.UTF8.GetBytes(id.ToString())],
+        physician.PublicKey,
+        id,
+        messageIds.GetValueOrDefault(doctorNIC)))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
         return Results.BadRequest();
     }
+
+    // Message is fresh, so add its id to the dictionary.
+    if (!messageIds.ContainsKey(doctorNIC))
+        messageIds[doctorNIC] = new();
+    messageIds[doctorNIC].Add(id);
 
     var patient = await db.Patients.Where(v => v.NIC == patientNIC).FirstOrDefaultAsync();
 
@@ -161,7 +178,7 @@ app.MapGet("/patients/{patientNIC}", async (HttpRequest request, MediTrackDb db,
     return Results.Bytes(bytes);
 });
 
-app.MapGet("/my-info/{NIC}", async (HttpRequest request, MediTrackDb db, string NIC) =>
+app.MapGet("/my-info/{NIC}", async (HttpRequest request, MediTrackDb db, string NIC, int id) =>
 {
 
     var patient = await db.Patients.Where(v => v.NIC == NIC).FirstOrDefaultAsync();
@@ -178,11 +195,21 @@ app.MapGet("/my-info/{NIC}", async (HttpRequest request, MediTrackDb db, string 
     reader.BaseStream.Seek(0, SeekOrigin.Begin);
     byte[] data = Convert.FromBase64String(await reader.ReadToEndAsync());
 
-    if (!CryptoLib.Crypto.Check(data, Encoding.UTF8.GetBytes(NIC), patient.PublicKey))
+    if (!CryptoLib.Crypto.CheckWithFreshness(
+        data,
+        [.. Encoding.UTF8.GetBytes(NIC), .. Encoding.UTF8.GetBytes(id.ToString())],
+        patient.PublicKey, 
+        id, 
+        messageIds.GetValueOrDefault(NIC)))
     {
         Console.WriteLine("[Error]: Message Auth Failed");
         return Results.BadRequest();
     }
+
+    // Message is fresh, so add its id to the dictionary.
+    if (!messageIds.ContainsKey(NIC))
+        messageIds[NIC] = new();
+    messageIds[NIC].Add(id);
 
     var patientDto = new PatientDTO
     (

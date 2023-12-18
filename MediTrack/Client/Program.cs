@@ -99,6 +99,8 @@ class Program
     vwIDAQAB
     -----END PUBLIC KEY-----";
 
+    static int messageId = 0;
+
     private static async Task Main(string[] args)
     {
         // TODO: REMOVE THIS ENABLE SSL
@@ -183,12 +185,18 @@ class Program
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"{MEDITRACK_HOST}/my-info/{nic}"),
+            RequestUri = new Uri($"{MEDITRACK_HOST}/my-info/{nic}?id={messageId}"),
             // Sign your request content to prove authenticity
-            Content = new StringContent(Convert.ToBase64String(Crypto.SignData(Encoding.UTF8.GetBytes(nic), privateKey)))
+            Content = new StringContent(Convert.ToBase64String(Crypto.SignData(
+            [
+                .. Encoding.UTF8.GetBytes(nic),
+                .. Encoding.UTF8.GetBytes(messageId.ToString())
+            ],
+                privateKey)))
         };
 
         var response = await client.SendAsync(request);
+        messageId++;
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
@@ -232,12 +240,18 @@ class Program
         var request = new HttpRequestMessage
         {
             Method = HttpMethod.Get,
-            RequestUri = new Uri($"{MEDITRACK_HOST}/patients/{patientNIC}?doctorNIC={doctorNIC}&emergency={emergency}"),
+            RequestUri = new Uri($"{MEDITRACK_HOST}/patients/{patientNIC}?doctorNIC={doctorNIC}&emergency={emergency}&id={messageId}"),
             // Sign your request content to prove authenticity
-            Content = new StringContent(Convert.ToBase64String(Crypto.SignData([.. Encoding.UTF8.GetBytes(doctorNIC), .. Encoding.UTF8.GetBytes(emergency.ToString())], privateKey)))
+            Content = new StringContent(Convert.ToBase64String(Crypto.SignData(
+            [
+                .. Encoding.UTF8.GetBytes(doctorNIC),
+                .. Encoding.UTF8.GetBytes(emergency.ToString()),
+                .. Encoding.UTF8.GetBytes(messageId.ToString())
+            ], privateKey)))
         };
 
         var response = await client.SendAsync(request);
+        messageId++;
 
         if (response.StatusCode != HttpStatusCode.OK)
         {
