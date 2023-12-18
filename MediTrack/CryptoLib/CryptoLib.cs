@@ -93,6 +93,27 @@ public class Crypto
 
     /// <summary>
     /// Verifies the integrity of the given <paramref name="data"/> by hashing it and comparing it
+    /// with the deciphered <paramref name="signedData"/> It also checks the freshness of the message.
+    /// </summary>
+    /// <param name="signedData"><c>signedData</c> is the <paramref name="data"/> signed with the senders private key.</param>
+    /// <param name="data"><c>data</c> you want to check for integrity.</param>
+    /// <param name="key"><c>key</c> is the senders public key in Pem format.</param>
+    /// <param name="id"><c>id</c> is the identifier of the message.</param>
+    /// <returns> <c>true</c> if the <paramref name="data"/> wasn't tampered with and not yet seen, <c>false</c> otherwise.</returns>
+    static public bool CheckWithFreshness(byte[] signedData, byte[] data, string key, int id, HashSet<int>? ids)
+    {
+        bool result = Check(signedData, data, key);
+
+        // check freshness if message is authentic
+        if (result && ids is not null && ids.Contains(id))
+        {
+            return false;
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Verifies the integrity of the given <paramref name="data"/> by hashing it and comparing it
     /// with the deciphered <paramref name="signedData"/>.
     /// </summary>
     /// <param name="signedData"><c>signedData</c> is the <paramref name="data"/> signed with the senders private key.</param>
@@ -101,7 +122,6 @@ public class Crypto
     /// <returns> <c>true</c> if the <paramref name="data"/> wasn't tampered with, <c>false</c> otherwise.</returns>
     static public bool Check(byte[] signedData, byte[] data, string key)
     {
-        // TODO: Check for freshness too.
         try
         {
             // Console.WriteLine($"check hash: {Convert.ToBase64String(signedData)}");
@@ -109,7 +129,6 @@ public class Crypto
             {
                 rsa.ImportFromPem(key);
                 return rsa.VerifyData(data, SHA256.Create(), signedData);
-
             };
         }
         catch (Exception e)
