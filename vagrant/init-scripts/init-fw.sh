@@ -8,7 +8,6 @@ sudo ip addr add 192.168.1.20/24 dev eth1 # Database server
 sudo ip link set dev eth0 up
 sudo ip link set dev eth1 up
 
-
 # Activate IP forwarding
 sudo sysctl net.ipv4.ip_forward=1
 
@@ -34,7 +33,7 @@ sudo ufw allow out on lo
 # Allow HTTP connections from external machines (Auth and Client)
 sudo ufw allow in on eth2 to any port 80
 
-# Redirect all HTTP connections to the AS
+# !Redirect all HTTP connections to the AS
 sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j DNAT --to-destination 192.168.0.20:80
 
 # Allow TLS/SSL connections from AS to the DB
@@ -48,4 +47,4 @@ sudo ufw deny in on eth0
 sudo ufw deny in on eth1
 
 # Restart to apply changes
-sudo systemctl restart NetworkManager
+sudo systemctl restart systemd-networkd

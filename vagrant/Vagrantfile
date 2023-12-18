@@ -102,7 +102,7 @@ Vagrant.configure("2") do |config|
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
         # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
-        cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && cd ../..
+        cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && dotnet restore && cd ../..
 
         # Start running the program
         ./MediTrackApp/MediTrackBackend
@@ -161,32 +161,26 @@ Vagrant.configure("2") do |config|
     # Create shared folder for compiling auth server code
     auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
 
-    # Install .NET
+    # Install .NET and compile project
     auth_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        sudo apt update
         # Do necessary installations
+        sudo apt update
         wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
         chmod +x ./dotnet-install.sh
-        /bin/sh ./dotnet-install.sh --version latest
+        /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
-        echo "export DOTNET_ROOT=~/.dotnet"
-        echo 'export PATH=$PATH:$DOTNET_ROOT'
-      SHELL
-    end
+        export DOTNET_ROOT=/usr/local/bin
+        export PATH=$PATH:$DOTNET_ROOT
 
-    # Run AuthServer program
-    auth_config.vm.provision "shell" do |shell|
-      shell.inline = <<-SHELL
+        # Ensure script has correct line endings for unix
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-app-server.sh
+
         # Change to the AuthServer directory, publish the .NET program, and change back to the parent directory
         cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
 
         # Start running the program
         ./AuthServerApp/AuthServer
-
-        #Run the initial setup script #! No actual content in this script
-        # chmod +x /vagrant/init-scripts/init-auth-server.sh
-        # /vagrant/init-scripts/init-auth-server.sh
       SHELL
     end
   end
@@ -210,22 +204,17 @@ Vagrant.configure("2") do |config|
 
     client_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-      # Do necessary installations
+        # Do necessary installations
         sudo apt update
         wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
         chmod +x ./dotnet-install.sh
-        /bin/sh ./dotnet-install.sh --version latest
+        /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
-        echo "export DOTNET_ROOT=~/.dotnet"
-        echo 'export PATH=$PATH:$DOTNET_ROOT'
-      SHELL
-    end
+        export DOTNET_ROOT=/usr/local/bin
+        export PATH=$PATH:$DOTNET_ROOT
 
-    client_config.vm.provision "shell" do |shell|
-      shell.inline = <<-SHELL
-        # Run the initial setup script
-        # chmod +x /vagrant/init-scripts/init-client-machine.sh
-        # /vagrant/init-scripts/init-client-machine.sh
+        # Ensure script has correct line endings for unix
+        # sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
 
         # Compile the Client code
         cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
