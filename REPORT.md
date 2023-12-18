@@ -29,8 +29,6 @@ We made two key design choices in this phase:
 2. **Digital signatures** - To provide _authenticity_ for the documents, each document is signed when it is encrypted. The user who calls `protect()` provides an authentication key, which is their private key, to sign the document. Then, the recipient provides the sender's public key when they call `unprotect()` as the authentication key for `unprotect()`. This allows users to easily check the authenticity of the document by verifying the sender. 
 
 
-<!CONSIDER MENTIONING FRESHNESS ONCE ADDED. >
-
 
 (_Include a complete example of your data format, with the designed protections._)
 - Not sure what this means
@@ -53,7 +51,8 @@ In accordance with the project task requirements, our functions were designed as
 
 #### 2.2.1. Network and Machine Setup
 
-(_Provide a brief description of the built infrastructure._)
+We chose to use the following setup for our network: 
+![Infrastructure](/img/Infrastructure.png)
 
 (_Justify the choice of technologies for each server._)
 

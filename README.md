@@ -5,10 +5,8 @@
 | Number | Name              | User                             | E-mail                              |
 | -------|-------------------|----------------------------------| ------------------------------------|
 | 108444  | Tilde Eriksen Eine     | <https://github.com/tildeeine>   | <mailto:tilde.eine@tecnico.ulisboa.pt>   |
-| 22222  | Bob Computer      | <https://github.com/BobUser>     | <mailto:bob@tecnico.ulisboa.pt>     |
-| 33333  | Charlie Security  | <https://github.com/CharlieUser> | <mailto:charlie@tecnico.ulisboa.pt> |
-
-*(fill table above with team member information)*  
+| 96392  | Guilherme Luís Francisco Soares      | <https://github.com/guilhas07>     | <mailto:guilherme.luis.s@tecnico.ulisboa.pt>     |
+| 89377  | David Daniel Oliveira Cruz  | <https://github.com/ddavidcruzr> | <mailto:daviddcruz@tecnico.ulisboa.pt> |
 
 <img src="./img/tilde_profileimg.jpg" width="150">
 
@@ -29,11 +27,11 @@ This document presents installation and demonstration instructions.
 
 ## Installation
 
-To see the project in action, it is necessary to setup a virtual environment, with N networks and M machines.  
+To see the project in action, it is necessary to setup a virtual environment, with 2 internal networks and 5 machines.  
 
 The following diagram shows the networks and machines:
 
-*(include a text-based or an image-based diagram)*
+![Infrastructure](img/inrfa-op2-single-fw.png)
 
 ### Prerequisites
 
@@ -42,35 +40,25 @@ All the virtual machines are based on: Linux 64-bit, Kali 2023.3
 [Download](https://...link_to_download_installation_media) and [install](https://...link_to_installation_instructions) a virtual machine of Kali Linux 2023.3.  
 Clone the base machine to create the other machines.
 
-*(above, replace witch actual links)*
 
 ### Machine configurations
 
 For each machine, there is an initialization script with the machine name, with prefix `init-` and suffix `.sh`, that installs all the necessary packages and makes all required configurations in the a clean machine.
 
-Inside each machine, use Git to obtain a copy of all the scripts and code.
+Since we use Vagrant, we should not need to manually run anything. To see detailed instuctions for project setup, please see [SETUP](SETUP.md). 
 
-```sh
-$ git clone https://github.com/tecnico-sec/cxx...
-```
+Here, we will explain the content of each machine, and give commands to verify and and test for each machine. You can access the machines either through SSH, as described in [SETUP](SETUP.md), or open them normally through the vbox GUI. 
 
-*(above, replace with link to actual repository)*
 
-Next we have custom instructions for each machine.
+#### Application Server
 
-#### Machine 1
-
-This machine runs ...
-
-*(describe what kind of software runs on this machine, e.g. a database server (PostgreSQL 16.1))*
+This machine runs the main functionality of the MediTrack system, by running the backend and exposing a CLI API to clients. It runs the MediTrackBackend code, using the CryptoLib. It should be open to communication from clients runnng the Client program. 
 
 To verify:
 
 ```sh
 $ setup command
 ```
-
-*(replace with actual commands)*
 
 To test:
 
@@ -88,9 +76,22 @@ If you receive the following message ... then ...
 
 *(explain how to fix some known problem)*
 
-#### Machine ...
+#### Client machine
 
 *(similar content structure as Machine 1)*
+
+#### Firewall Server
+
+*(similar content structure as Machine 1)*
+
+#### Database Server
+
+*(similar content structure as Machine 1)*
+
+#### Authentication Server
+
+*(similar content structure as Machine 1)*
+
 
 ## Demonstration
 
@@ -123,8 +124,6 @@ We use [SemVer](http://semver.org/) for versioning.
 ### License
 
 This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) for details.
-
-*(switch to another license, or no license, as you see fit)*
 
 ----
 END OF README
