@@ -11,68 +11,17 @@ Vagrant.configure("2") do |config|
   config.vbguest.auto_update = false
 
   # Set up synced folders
-  config.vm.synced_folder ".", "/vagrant"
 
   # Individual VM configurations
-  # Application Server VM
-  config.vm.define "app_server" do |app_config|
-    app_config.vm.box = "generic/ubuntu2304"
-    app_config.vm.hostname = "a31-MediTrack-app-server"
-
-    # VM name
-    app_config.vm.provider "virtualbox" do |vb|
-      vb.gui = false
-      vb.name = "a31-MediTrack-app-server"
-    end
-
-    # Create shared folder for compiling app server code.
-    app_config.vm.synced_folder "../MediTrack", "/MediTrack"
-
-    # Enable temporary internet access for installing .NET
-    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
-
-    app_config.vm.provision "shell" do |shell|
-      shell.inline = <<-SHELL
-        # Do necessary installations
-        sudo apt update
-        sudo apt install -y dotnet-sdk-3.1
-      SHELL
-    end
-
-    # Disable NAT for internet access
-    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, disabled: true
-
-    # Internal Network sw-1
-    app_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-1", auto_config: false
-    # Enable Promiscuous Mode for sw-1
-    app_config.vm.provider "virtualbox" do |vb|
-      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-    end
-
-    app_config.vm.provision "shell" do |shell|
-      shell.inline = <<-SHELL
-        # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
-        cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && cd ../..
-
-        # Start running the program
-        ./MediTrackApp/MediTrackBackend
-
-        # Run the initial setup script
-        chmod +x /vagrant/init-scripts/init-app-server.sh
-        /vagrant/init-scripts/init-app-server.sh
-      SHELL
-    end
-  end
-
-
   # Firewall Server VM
   config.vm.define "firewall" do |fw_config|
-    fw_config.vm.box = "generic/ubuntu2304"
+    fw_config.vm.box = "bento/ubuntu-20.04"
     fw_config.vm.hostname = "a31-MediTrack-firewall-server"
+    fw_config.vm.synced_folder ".", "/vagrant"
 
     # VM name
     fw_config.vm.provider "virtualbox" do |vb|
-      vb.gui = false
+      #vb.gui = false
       vb.name = "a31-MediTrack-firewall-server"
     end
 
@@ -97,19 +46,74 @@ Vagrant.configure("2") do |config|
       shell.inline = <<-SHELL
         # Do necessary installations
         sudo apt update
-        sudo apt install iptables -y
-        sudo apt install iptables-persistent -y
+        sudo apt install -y iptables
+        #! Find alternative to iptables-persistent, installation is interactive
+        # sudo apt-get install -y iptables-persistent
 
         # Run initial setup script
-        chmod +x /vagrant/init-scripts/init-fw.sh
-        /vagrant/init-scripts/init-fw.sh
+        sudo chmod +x /vagrant/init-scripts/init-fw.sh
+        /bin/sh /vagrant/init-scripts/init-fw.sh
+      SHELL
+    end
+  end
+
+  # Application Server VM
+  config.vm.define "app_server" do |app_config|
+    app_config.vm.box = "bento/ubuntu-20.04"
+    app_config.vm.hostname = "a31-MediTrack-app-server"
+
+    # VM name
+    app_config.vm.provider "virtualbox" do |vb|
+      vb.gui = false
+      vb.name = "a31-MediTrack-app-server"
+    end
+
+    # Create shared folder for compiling app server code.
+    app_config.vm.synced_folder "../MediTrack", "/MediTrack"
+
+    # Enable temporary internet access for installing .NET
+    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+
+    app_config.vm.provision "shell" do |shell|
+      shell.inline = <<-SHELL
+        # Do necessary installations
+        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+        chmod +x ./dotnet-install.sh
+        /bin/sh ./dotnet-install.sh --version latest
+
+        echo "export DOTNET_ROOT=~/.dotnet"
+        echo 'export PATH=$PATH:$DOTNET_ROOT'
+      SHELL
+    end
+
+    # Disable NAT for internet access
+    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, disabled: true
+
+    # Internal Network sw-1
+    app_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-1", auto_config: false
+    # Enable Promiscuous Mode for sw-1
+    app_config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
+
+    app_config.vm.provision "shell" do |shell|
+      shell.inline = <<-SHELL
+        # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
+        cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && cd ../..
+
+        # Start running the program
+        ./MediTrackApp/MediTrackBackend
+
+        # Run the initial setup script
+        sudo chmod +x /vagrant/init-scripts/init-app-server.sh
+        /bin/sh /vagrant/init-scripts/init-app-server.sh
       SHELL
     end
   end
 
   # Database Server VM
   config.vm.define "db_server" do |db_config|
-    db_config.vm.box = "generic/ubuntu2304"
+    db_config.vm.box = "bento/ubuntu-20.04"
     db_config.vm.hostname = "a31-MediTrack-db-server"
 
     # VM name
@@ -132,14 +136,14 @@ Vagrant.configure("2") do |config|
 
         # Run initial setup script
         chmod +x /vagrant/init-scripts/init-db-server.sh
-        /vagrant/init-scripts/init-db-server.sh
+        /bin/sh /vagrant/init-scripts/init-db-server.sh
       SHELL
     end
   end
 
   # Authentication Server
   config.vm.define "auth_server" do |auth_config|
-    auth_config.vm.box = "generic/ubuntu2304"
+    auth_config.vm.box = "bento/ubuntu-20.04"
     auth_config.vm.hostname = "a31-MediTrack-auth-server"
 
     # VM name
@@ -154,12 +158,23 @@ Vagrant.configure("2") do |config|
     # Create shared folder for compiling auth server code
     auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
 
+    # Install .NET
     auth_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        # Necessary installations
         sudo apt update
-        sudo apt install -y dotnet-sdk-3.1
+        # Do necessary installations
+        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+        chmod +x ./dotnet-install.sh
+        /bin/sh ./dotnet-install.sh --version latest
 
+        echo "export DOTNET_ROOT=~/.dotnet"
+        echo 'export PATH=$PATH:$DOTNET_ROOT'
+      SHELL
+    end
+
+    # Run AuthServer program
+    auth_config.vm.provision "shell" do |shell|
+      shell.inline = <<-SHELL
         # Change to the AuthServer directory, publish the .NET program, and change back to the parent directory
         cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
 
@@ -175,7 +190,7 @@ Vagrant.configure("2") do |config|
 
   # Client Machine
   config.vm.define "client_machine" do |client_config|
-    client_config.vm.box = "generic/ubuntu2304"
+    client_config.vm.box = "bento/ubuntu-20.04"
     client_config.vm.hostname = "a31-MediTrack-client-machine"
 
     # VM name
@@ -192,10 +207,19 @@ Vagrant.configure("2") do |config|
 
     client_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        # Necessary installations
+      # Do necessary installations
         sudo apt update
-        sudo apt install -y dotnet-sdk-3.1
+        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+        chmod +x ./dotnet-install.sh
+        /bin/sh ./dotnet-install.sh --version latest
 
+        echo "export DOTNET_ROOT=~/.dotnet"
+        echo 'export PATH=$PATH:$DOTNET_ROOT'
+      SHELL
+    end
+
+    client_config.vm.provision "shell" do |shell|
+      shell.inline = <<-SHELL
         # Run the initial setup script
         # chmod +x /vagrant/init-scripts/init-client-machine.sh
         # /vagrant/init-scripts/init-client-machine.sh

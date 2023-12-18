@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # VMSETTINGS: Adapter1, internal network, sw-1, promiscuous mode allow VMs. Adapter2, internal network, sw-2, promiscuous mode allow VMs. Adapter3, NAT. 
 
@@ -44,9 +44,6 @@ sudo /sbin/iptables -A FORWARD -i eth0 -o eth1 -s 192.168.1.30 -d 192.168.0.20 -
 # Drop all other incoming and forwarding traffic
 sudo /sbin/iptables -A INPUT -j DROP
 sudo /sbin/iptables -A FORWARD -j DROP
-
-# Make iptables persistent
-sudo apt install iptables-persistent -y
 
 # Save current iptables rules
 # FOR IPv4
