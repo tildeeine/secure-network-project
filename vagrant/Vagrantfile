@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
 
   # Disable VirtualBox Guest Additions auto-update
   # Cmd below must be commented out if vbguest not installed on host
-  config.vbguest.auto_update = false
+  # config.vbguest.auto_update = false
 
   # Set up synced folders
   config.vm.synced_folder ".", "/vagrant"
@@ -82,7 +82,7 @@ Vagrant.configure("2") do |config|
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
         # Do necessary installations
-        mv /home/vagrant/installers/dotnet-install.sh .
+        mv /vagrant/installers/dotnet-install.sh .
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
@@ -94,7 +94,7 @@ Vagrant.configure("2") do |config|
         /bin/sh /vagrant/init-scripts/init-app-server.sh
 
         # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
-        cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && dotnet restore && cd ../..
+        # cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && dotnet restore && cd ../..
 
         echo "export DOTNET_ROOT=/usr/local/bin" >> /home/vagrant/.bashrc
         echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
@@ -195,7 +195,7 @@ Vagrant.configure("2") do |config|
         sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-app-server.sh
 
         # Change to the AuthServer directory, publish the .NET program, and change back to the parent directory
-        cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
+        # cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
 
         # Start running the program
         # screen -dm /AuthServerApp/AuthServer
@@ -233,7 +233,7 @@ Vagrant.configure("2") do |config|
         sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
 
         # Compile the Client code
-        cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
+        # cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
 
         # Start running the program
         # /ClientApp/Client
