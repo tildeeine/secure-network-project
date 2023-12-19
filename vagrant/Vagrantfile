@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
 
   # Disable VirtualBox Guest Additions auto-update
   # TODO: Should we comment this line below?
-  # config.vbguest.auto_update = false
+  config.vbguest.auto_update = false
 
   # Set up synced folders
   config.vm.synced_folder ".", "/vagrant"
@@ -19,6 +19,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "firewall" do |fw_config|
     fw_config.vm.box = "bento/ubuntu-20.04"
     fw_config.vm.hostname = "a31-MediTrack-firewall-server"
+    fw_config.vm.network "public_network", type: "static", ip: "192.168.3.10"
 
     # VM name
     fw_config.vm.provider "virtualbox" do |vb|
@@ -27,28 +28,23 @@ Vagrant.configure("2") do |config|
     end
 
     # Internal Network sw-1
-    fw_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-1", auto_config: false
+    fw_config.vm.network "private_network", type: "static", ip: "192.168.0.10",virtualbox__intnet: "sw-1", auto_config: false
     # Enable Promiscuous Mode for sw-1
     fw_config.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
 
     # Internal Network sw-2
-    fw_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-2", auto_config: false
+    fw_config.vm.network "private_network", type: "static", ip:"192.168.1.10", virtualbox__intnet: "sw-2", auto_config: false
     # Enable Promiscuous Mode for sw-2
     fw_config.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--nicpromisc3", "allow-all"]
     end
 
-    # Internet access
-    # TODO: Check if this is needed
-    # fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
-
     fw_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
         # Do necessary installations
         sudo apt update
-        sudo apt install -y iptables
         sudo apt install ufw
 
         # Run initial setup script
@@ -62,6 +58,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "app_server" do |app_config|
     app_config.vm.box = "bento/ubuntu-20.04"
     app_config.vm.hostname = "a31-MediTrack-app-server"
+    app_config.vm.network "public_network", type: "static", ip: "192.168.3.100" # Temporary internet access for installations
+
 
     # VM name
     app_config.vm.provider "virtualbox" do |vb|
@@ -72,9 +70,13 @@ Vagrant.configure("2") do |config|
     # Create shared folder for compiling app server code.
     app_config.vm.synced_folder "../MediTrack", "/MediTrack"
 
-    # Enable temporary internet access for installing .NET
-    # TODO: check if this is needed
-    # app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    # Internal Network sw-1
+    # Internal Network sw-1
+    app_config.vm.network "private_network", type: "static", ip: "192.168.0.20", virtualbox__intnet: "sw-1", auto_config: false
+    # Enable Promiscuous Mode for sw-1
+    app_config.vm.provider "virtualbox" do |vb|
+      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+    end
 
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
@@ -83,26 +85,13 @@ Vagrant.configure("2") do |config|
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
-
         # Ensure script has correct line endings for unix
         sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-app-server.sh
-      SHELL
-    end
 
-    # Internal Network sw-1
-    app_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-1", auto_config: false
-    # Enable Promiscuous Mode for sw-1
-    app_config.vm.provider "virtualbox" do |vb|
-      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
-    end
+        # Run the initial setup script
+        sudo chmod +x /vagrant/init-scripts/init-app-server.sh
+        /bin/sh /vagrant/init-scripts/init-app-server.sh
 
-    # Disable NAT for internet access
-    # TODO: check if this is needed
-    # app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, disabled: true
-
-
-    app_config.vm.provision "shell" do |shell|
-      shell.inline = <<-SHELL
         # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
         cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && dotnet restore && cd ../..
 
@@ -112,17 +101,17 @@ Vagrant.configure("2") do |config|
         # Start running the program
         # screen -S server -dm /MediTrackApp/MediTrackBackend
 
-        # Run the initial setup script
-        sudo chmod +x /vagrant/init-scripts/init-app-server.sh
-        /bin/sh /vagrant/init-scripts/init-app-server.sh
       SHELL
     end
+
+    # TODO: Remove temp internet access
   end
 
   # Database Server VM
   config.vm.define "db_server" do |db_config|
     db_config.vm.box = "bento/ubuntu-20.04"
     db_config.vm.hostname = "a31-MediTrack-db-server"
+    db_config.vm.network "public_network", type: "static", ip: "192.168.4.80" # Temporary internet access for installations
 
     # VM name
     db_config.vm.provider "virtualbox" do |vb|
@@ -130,8 +119,11 @@ Vagrant.configure("2") do |config|
       vb.name = "a31-MediTrack-db-server"
     end
 
+    # Create shared folder for populating database
+    db_config.vm.synced_folder "../MediTrack", "/MediTrack"
+
     # Internal Network sw-2
-    db_config.vm.network "private_network", type: "dhcp", virtualbox__intnet: "sw-2", auto_config: false
+    db_config.vm.network "private_network", type: "static", ip: "192.168.1.30", virtualbox__intnet: "sw-2", auto_config: false
     # Enable Promiscuous Mode for sw-2
     db_config.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
@@ -139,30 +131,46 @@ Vagrant.configure("2") do |config|
 
     db_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        # Might need
-        # sudo apt-get install -y mysql-server
+        sudo apt update
+        sudo apt install mysql-server -y
+        sudo service mysql start
 
-        # Run initial setup script
-        chmod +x /vagrant/init-scripts/init-db-server.sh
-        /bin/sh /vagrant/init-scripts/init-db-server.sh
+        # Run MySQL secure installation script
+        #!___ No such file or directory
+        sudo mysql -u root < /vagrant/database-setup/mysql_secure_installation.sql
+
+        # Create MySQL database and user
+        #!___ No such file or directory
+        mysql -u root < /vagrant/database-setup/create_database.sql
+
+        # Copy init.sql to the MySQL server's initialization directory
+        sudo cp /MediTrack/MediTrackBackend/Migrations/init.sql /etc/mysql/conf.d/
+        sudo service mysql restart
+
+        # Restart MySQL to apply changes
+        service mysql restart
+
+        # Run migration script
+        #!___ chmod: cannot acces migrate.sh, no such file or directory
+        chmod +x /MediTrack/MediTrackBackend/Migrations/migrate.sh
+        cd /MediTrack/MediTrackBackend/Migrations && /bin/sh ./migrate.sh init
       SHELL
     end
+
+    # TODO: Remove internet access
   end
 
   # Authentication Server
   config.vm.define "auth_server" do |auth_config|
     auth_config.vm.box = "bento/ubuntu-20.04"
     auth_config.vm.hostname = "a31-MediTrack-auth-server"
+    auth_config.vm.network "public_network", type: "static", ip: "192.168.3.100"
 
     # VM name
     auth_config.vm.provider "virtualbox" do |vb|
       vb.gui = false
       vb.name = "a31-MediTrack-auth-server"
     end
-
-    # Internet access
-    # TODO: Check if this is needed
-    # auth_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling auth server code
     auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
@@ -195,16 +203,13 @@ Vagrant.configure("2") do |config|
   config.vm.define "client_machine" do |client_config|
     client_config.vm.box = "bento/ubuntu-20.04"
     client_config.vm.hostname = "a31-MediTrack-client-machine"
+    client_config.vm.network "public_network", type: "static", ip: "192.168.4.50"
 
     # VM name
     client_config.vm.provider "virtualbox" do |vb|
       vb.gui = false
       vb.name = "a31-MediTrack-client-machine"
     end
-
-    # Internet access
-    # TODO: Check if this is needed
-    # client_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling client code
     client_config.vm.synced_folder "../MediTrack/", "/MediTrack"
