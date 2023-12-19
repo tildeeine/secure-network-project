@@ -10,7 +10,7 @@
 
 <img src="./img/tilde_profileimg.jpg" width="150">
 
-![Bob](img/bob.png) ![Charlie](img/charlie.png)
+<img src="./img/guilherme_profile.png" height="150px"> ![Charlie](img/charlie.png)
 
 *(add face photos with 150px height; faces should have similar size and framing)*
 
