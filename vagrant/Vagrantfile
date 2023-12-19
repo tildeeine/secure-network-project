@@ -8,7 +8,8 @@ Vagrant.configure("2") do |config|
   # Base configuration for all VMs
 
   # Disable VirtualBox Guest Additions auto-update
-  config.vbguest.auto_update = false
+  # TODO: Should we comment this line below?
+  # config.vbguest.auto_update = false
 
   # Set up synced folders
   config.vm.synced_folder ".", "/vagrant"
@@ -40,7 +41,8 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    # TODO: Check if this is needed
+    # fw_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     fw_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
@@ -71,7 +73,8 @@ Vagrant.configure("2") do |config|
     app_config.vm.synced_folder "../MediTrack", "/MediTrack"
 
     # Enable temporary internet access for installing .NET
-    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    # TODO: check if this is needed
+    # app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
@@ -80,8 +83,6 @@ Vagrant.configure("2") do |config|
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
-        export DOTNET_ROOT=/usr/local/bin
-        export PATH=$PATH:$DOTNET_ROOT
 
         # Ensure script has correct line endings for unix
         sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-app-server.sh
@@ -96,7 +97,8 @@ Vagrant.configure("2") do |config|
     end
 
     # Disable NAT for internet access
-    app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, disabled: true
+    # TODO: check if this is needed
+    # app_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true, disabled: true
 
 
     app_config.vm.provision "shell" do |shell|
@@ -104,8 +106,11 @@ Vagrant.configure("2") do |config|
         # Change to the MediTrack directory, publish the .NET program, and change back to the parent directory
         cd /MediTrack/MediTrackBackend && dotnet publish -o ../../MediTrackApp && dotnet restore && cd ../..
 
+        echo "export DOTNET_ROOT=/usr/local/bin" >> /home/vagrant/.bashrc
+        echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
+
         # Start running the program
-        ./MediTrackApp/MediTrackBackend
+        # screen -S server -dm /MediTrackApp/MediTrackBackend
 
         # Run the initial setup script
         sudo chmod +x /vagrant/init-scripts/init-app-server.sh
@@ -156,7 +161,8 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    auth_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    # TODO: Check if this is needed
+    # auth_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling auth server code
     auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
@@ -170,8 +176,8 @@ Vagrant.configure("2") do |config|
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
-        export DOTNET_ROOT=/usr/local/bin
-        export PATH=$PATH:$DOTNET_ROOT
+        echo "export DOTNET_ROOT=/usr/local/bin" >> /home/vagrant/.bashrc
+        echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
 
         # Ensure script has correct line endings for unix
         sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-app-server.sh
@@ -180,7 +186,7 @@ Vagrant.configure("2") do |config|
         cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
 
         # Start running the program
-        ./AuthServerApp/AuthServer
+        # screen -dm /AuthServerApp/AuthServer
       SHELL
     end
   end
@@ -197,7 +203,8 @@ Vagrant.configure("2") do |config|
     end
 
     # Internet access
-    client_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
+    # TODO: Check if this is needed
+    # client_config.vm.network "forwarded_port", guest: 22, host: 2222, id: "ssh", auto_correct: true
 
     # Create shared folder for compiling client code
     client_config.vm.synced_folder "../MediTrack/", "/MediTrack"
@@ -210,8 +217,8 @@ Vagrant.configure("2") do |config|
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
-        export DOTNET_ROOT=/usr/local/bin
-        export PATH=$PATH:$DOTNET_ROOT
+        echo "export DOTNET_ROOT=/usr/local/bin" >> /home/vagrant/.bashrc
+        echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
 
         # Ensure script has correct line endings for unix
         # sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
@@ -220,7 +227,7 @@ Vagrant.configure("2") do |config|
         cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
 
         # Start running the program
-        ./ClientApp/Client
+        # /ClientApp/Client
       SHELL
     end
   end
