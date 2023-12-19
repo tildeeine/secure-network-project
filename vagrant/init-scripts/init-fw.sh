@@ -19,7 +19,7 @@ sudo sysctl net.ipv4.ip_forward=1
 
 # Enable the firewall 
 sudo ufw --force reset
-sudo ufw --force enable #NOTE: This closes the vagrant SSH connection
+sudo ufw --force enable 
 
 # Set default rules
 sudo ufw default deny incoming
@@ -37,6 +37,9 @@ sudo ufw allow from 192.168.0.20 to 192.168.1.30 port 443 proto tcp
 
 # Allow TLS/SSL connections from DB to AS
 sudo ufw allow from 192.168.1.30 to 192.168.0.20 port 443 proto tcp
+
+# To allow Vagrant SSH connections
+sudo ufw allow 22
 
 # Drop all other incoming and forwarding traffic
 sudo ufw deny in on eth0

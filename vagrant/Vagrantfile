@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
   # Base configuration for all VMs
 
   # Disable VirtualBox Guest Additions auto-update
-  # TODO: Should we comment this line below?
+  # Cmd below must be commented out if vbguest not installed on host
   config.vbguest.auto_update = false
 
   # Set up synced folders
@@ -47,6 +47,9 @@ Vagrant.configure("2") do |config|
         sudo apt update
         sudo apt install ufw
 
+        # Ensure script has correct line endings for unix
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-fw.sh
+
         # Run initial setup script
         sudo chmod +x /vagrant/init-scripts/init-fw.sh
         /bin/sh /vagrant/init-scripts/init-fw.sh
@@ -58,8 +61,6 @@ Vagrant.configure("2") do |config|
   config.vm.define "app_server" do |app_config|
     app_config.vm.box = "bento/ubuntu-20.04"
     app_config.vm.hostname = "a31-MediTrack-app-server"
-    app_config.vm.network "public_network", type: "static", ip: "192.168.3.100" # Temporary internet access for installations
-
 
     # VM name
     app_config.vm.provider "virtualbox" do |vb|
@@ -81,7 +82,7 @@ Vagrant.configure("2") do |config|
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
         # Do necessary installations
-        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+        mv /home/vagrant/installers/dotnet-install.sh .
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
@@ -108,10 +109,10 @@ Vagrant.configure("2") do |config|
   end
 
   # Database Server VM
+  # Issues with database creation, :149
   config.vm.define "db_server" do |db_config|
     db_config.vm.box = "bento/ubuntu-20.04"
     db_config.vm.hostname = "a31-MediTrack-db-server"
-    db_config.vm.network "public_network", type: "static", ip: "192.168.4.80" # Temporary internet access for installations
 
     # VM name
     db_config.vm.provider "virtualbox" do |vb|
@@ -129,35 +130,38 @@ Vagrant.configure("2") do |config|
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
     end
 
+    # TODO: CLEAN UP script, move as much as possible to a separate file
     db_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        sudo apt update
-        sudo apt install mysql-server -y
+        # This line works
+        mkdir mysql-installers && tar -xvf /vagrant/installers/mysql-server_8.0.35-1ubuntu20.04_amd64.deb-bundle.tar -C mysql-installers
+        # From this line doesn't work, file not found
+        sudo cp /vagrant/installers/libmecab2_0.996-10build1_amd64.deb mysql-installers
+        # Installing mysql and all dependencies
+        cd mysql-installers && sudo dpkg -i libmecab2_0.996-10build1_amd64.deb && sudo dpkg -i mysql-common_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-client-plugins_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-client-core_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-client_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-client_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-server-core_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-server_8.0.35-1ubuntu20.04_amd64.deb
+
         sudo service mysql start
 
         # Run MySQL secure installation script
-        #!___ No such file or directory
-        sudo mysql -u root < /vagrant/database-setup/mysql_secure_installation.sql
+        sudo mysql -u root < /vagrant/database-setup/mysql-secure-installation.sql
 
         # Create MySQL database and user
-        #!___ No such file or directory
-        mysql -u root < /vagrant/database-setup/create_database.sql
+        mysql -u root -p a31-MediTrack < /vagrant/database-setup/create-database.sql
 
         # Copy init.sql to the MySQL server's initialization directory
         sudo cp /MediTrack/MediTrackBackend/Migrations/init.sql /etc/mysql/conf.d/
-        sudo service mysql restart
 
         # Restart MySQL to apply changes
         service mysql restart
 
         # Run migration script
-        #!___ chmod: cannot acces migrate.sh, no such file or directory
-        chmod +x /MediTrack/MediTrackBackend/Migrations/migrate.sh
-        cd /MediTrack/MediTrackBackend/Migrations && /bin/sh ./migrate.sh init
+        # Ensure script has correct line endings for unix
+        sudo apt install dos2unix && dos2unix /MediTrack/MediTrackBackend/migrate.sh
+
+        chmod +x /MediTrack/MediTrackBackend/migrate.sh
+        cd /MediTrack/MediTrackBackend && /bin/sh ./migrate.sh init
       SHELL
     end
-
-    # TODO: Remove internet access
   end
 
   # Authentication Server
@@ -212,7 +216,7 @@ Vagrant.configure("2") do |config|
     end
 
     # Create shared folder for compiling client code
-    client_config.vm.synced_folder "../MediTrack/", "/MediTrack"
+    client_config.vm.synced_folder "../MediTrack", "/MediTrack"
 
     client_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
@@ -226,7 +230,7 @@ Vagrant.configure("2") do |config|
         echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
 
         # Ensure script has correct line endings for unix
-        # sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
 
         # Compile the Client code
         cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
