@@ -6,7 +6,7 @@
 sudo ip addr add 192.168.0.20/24 dev eth0
 sudo ip link set dev eth0 up
 
-# Set External Firewall as default gateway
+#? Set External Firewall as default gateway
 # sudo ip route add default via 192.168.0.10
 
 # Restart to apply changes

@@ -11,33 +11,32 @@ sudo ip link set dev eth1 up
 # Activate IP forwarding
 sudo sysctl net.ipv4.ip_forward=1
 
-
 # ! edit the corresponding /etc/network/interfaces file.
 
 #! ou should also enable IP forwarding permanently on VM2. For that you need to edit /etc/sysctl.conf and uncomment the following line: net.ipv4.ip_forward=1
 
 # Set up firewall rules
-# Enable ufw to start on boot, add default rules, and deny all incoming traffic
+
+# Enable the firewall 
 sudo ufw --force reset
+sudo ufw --force enable #NOTE: This closes the vagrant SSH connection
+
+# Set default rules
 sudo ufw default deny incoming
-sudo ufw default allow outgoing
-sudo ufw enable
+sudo ufw default deny outgoing
 
-# Set up NAT to let AS access the internet
-sudo ufw route allow in on eth2 out on any from any to any
+# Allow incoming TLS/SSL connections on eth2, address to app server #? Does it allow app server to responds to these connections?
+sudo ufw allow in on eth2 from any to any port 443 proto tcp
+sudo ufw route allow in on eth2 out on eth0 from any to any port 443 proto tcp 
 
-# Allow loopback interface
-sudo ufw allow in on lo
-sudo ufw allow out on lo
-
-# Redirect all HTTP connections to the AS
-sudo ufw route allow in on eth0 from any to any port 80 to 192.168.0.20 port 80
+#! This might allow the app server to initiate connections to external networks
+#sudo ufw allow out on eth0 from 192.168.0.20 to any port 443 proto tcp
 
 # Allow TLS/SSL connections from AS to the DB
-sudo ufw allow in on eth0 from 192.168.0.20 to 192.168.1.30 port 443
+sudo ufw allow from 192.168.0.20 to 192.168.1.30 port 443 proto tcp
 
 # Allow TLS/SSL connections from DB to AS
-sudo ufw allow in on eth1 from 192.168.1.30 to 192.168.0.20 port 443
+sudo ufw allow from 192.168.1.30 to 192.168.0.20 port 443 proto tcp
 
 # Drop all other incoming and forwarding traffic
 sudo ufw deny in on eth0
