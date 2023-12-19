@@ -47,8 +47,8 @@ class Program
     get Get All patient info
     change Changes to doctor mode";
 
-    static string MEDITRACK_HOST = "http://localhost:5171";
-    static string AUTH_SERVER_HOST = "http://localhost:5110";
+    static string MEDITRACK_HOST = "https://localhost:5001";
+    static string AUTH_SERVER_HOST = "https://localhost:5002";
 
     //     static string privateKey = @"-----BEGIN PRIVATE KEY-----
     // MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDN8JyiQ9eiTGiF
@@ -103,9 +103,17 @@ class Program
 
     private static async Task Main(string[] args)
     {
-        // TODO: REMOVE THIS ENABLE SSL
         HttpClientHandler clientHandler = new HttpClientHandler();
-        clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
+        clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { 
+            Console.WriteLine(sender);
+            Console.WriteLine(cert);
+            if (cert?.Subject == "CN=meditrack-server" || cert?.Subject == "CN=auth-server")
+            {
+                Console.WriteLine($"It matches: {cert}");
+                return true;
+            }
+            return false; 
+        };
         // Pass the handler to httpclient(from you are calling api)
         using HttpClient client = new HttpClient(clientHandler);
 
@@ -146,9 +154,13 @@ class Program
                         switch (command_args[0])
                         {
                             case "get": // Doctor Command
+                                if (command_args.Length != 2)
+                                    break;
                                 await GetPatient(command_args[1], NIC, privateKey, publicKey, client, false);
                                 break;
                             case "emergency": // Doctor Command
+                                if (command_args.Length != 2)
+                                    break;
                                 await GetPatient(command_args[1], NIC, privateKey, publicKey, client, true);
                                 break;
                             case "change":

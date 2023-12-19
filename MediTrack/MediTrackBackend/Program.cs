@@ -62,7 +62,7 @@ cgwvI9KD55ah77I6u7ZG/Yo=
 
 Dictionary<string, HashSet<int>> messageIds = new();
 
-string AUTH_SERVER_URL = "http://localhost:5110";
+string AUTH_SERVER_URL = "https://localhost:5002";
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -87,10 +87,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// TODO: REMOVE THIS and enable ssl
 HttpClientHandler clientHandler = new HttpClientHandler();
-clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { return true; };
-// Pass the handler to httpclient(from you are calling api)
+clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) =>
+{
+    Console.WriteLine(sender);
+    Console.WriteLine(cert);
+    if (cert?.Subject == "CN=auth-server")
+    {
+        Console.WriteLine($"It matches: {cert}");
+        return true;
+    }
+    return false;
+};
 using HttpClient client = new HttpClient(clientHandler);
 
 app.MapGet("/patients/{patientNIC}", async (

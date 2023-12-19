@@ -20,6 +20,7 @@ fi
 # Generate certificate for meditrack-server and self-sign it
 generate_certificate meditrack-server
 openssl x509 -req -days 365 -in meditrack-server-request.csr -signkey meditrack-server.priv.pem -out meditrack-server.crt
+openssl pkcs12 -export -out meditrack-server.pfx -inkey meditrack-server.priv.pem -in meditrack-server.crt
 
 # Generate certificate for database-server and sign-it with the meditrack authority
 generate_certificate database-server
@@ -28,6 +29,7 @@ openssl x509 -req -days 365 -in database-server-request.csr -CA meditrack-server
 # Generate certificate for auth server and self-sign it
 generate_certificate auth-server
 openssl x509 -req -days 365 -in auth-server-request.csr -signkey auth-server.priv.pem -out auth-server.crt
+openssl pkcs12 -export -out auth-server.pfx -inkey auth-server.priv.pem -in auth-server.crt
 
 # Cleanup all the certificate request files
 rm *csr
