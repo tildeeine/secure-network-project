@@ -35,13 +35,16 @@ sudo iptables -t nat -F
 sudo iptables -t nat -A POSTROUTING  -o enp0s8 -j MASQUERADE    # Creates a source NAT on interface enp0s8
 
 # NAT rules
-# Allow SSH connections from vagrant
-# SSH
-# sudo iptables -A INPUT -p tcp --dport 22 -m tcp --ctstate NEW,ESTABLISHED -j ACCEPT
-# sudo iptables -A OUTPUT -p tcp --sport 22 -m tcp --ctstate ESTABLISHED -j ACCEPT
-# # sudo iptables -A INPUT -p tcp -m tcp --dport 2222 -j ACCEPT # Requires fw to be set up first for the portnumber to be right
-# # Allow outgoing SSH connections for vagrant
-# sudo iptables -A OUTPUT -p tcp -m tcp --sport 2222 -j ACCEPT # Requires fw to be set up first for the portnumber to be right
+# Set default policies
+sudo iptables -P INPUT DROP
+sudo iptables -P FORWARD DROP
+sudo iptables -P OUTPUT DROP
+
+# Auth: 192.168.3.100
+# Allow SSH connections from vagrant to the firewall server
+sudo iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT 
+sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
+# sudo iptables -A FORWARD -p tcp -m tcp --dport 22 --state ESTABLISHED -j ACCEPT # Requires fw to be set up first
 
 # Forward incoming TLS/SSL connections on enp0s8 to app server (EXT -> AS)
 sudo iptables -A FORWARD -d 192.168.3.10 -p tcp -m tcp --dport 443 -j ACCEPT
@@ -61,13 +64,10 @@ sudo iptables -A FORWARD -i enp0s10 -o enp0s9 -m state --state ESTABLISHED -j AC
 # Forward outgoing TLS/SSL connections from app server to auth server (AS -> AuthS) #! Only case where app server can initiate a connection
 sudo iptables -A FORWARD -s 192.168.0.20 -p tcp -m tcp --dport 443 -j ACCEPT
 sudo iptables -t nat -A PREROUTING -s 192.168.0.20 -d 192.168.3.100 -p tcp -m tcp --dport 5002 -j DNAT --to-destination 192.168.3.100:5002 #! check ports
+
 # Allow replies to established connection
 sudo iptables -A FORWARD -i enp0s8 -o enp0s9 -m state --state ESTABLISHED -j ACCEPT
 
-# # # Set default policies
-# sudo iptables -P INPUT DROP 
-# sudo iptables -P FORWARD DROP 
-# sudo iptables -P OUTPUT DROP #! Stops outgoing ssh connections
 
 # Save current iptables (NAT)
 # FOR IPv4
