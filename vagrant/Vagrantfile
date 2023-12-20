@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
 
   # Disable VirtualBox Guest Additions auto-update
   # Cmd below must be commented out if vbguest not installed on host
-  # config.vbguest.auto_update = false
+  config.vbguest.auto_update = false
 
   # Set up synced folders
   config.vm.synced_folder ".", "/vagrant"
@@ -45,6 +45,9 @@ Vagrant.configure("2") do |config|
       shell.inline = <<-SHELL
         # Do necessary installations
         sudo apt update
+        echo "iptables-persistent iptables-persistent/autosave_v4 boolean true" | sudo debconf-set-selections
+        echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | sudo debconf-set-selections
+        sudo apt install -y iptables-persistent
         sudo apt install ufw
 
         # Ensure script has correct line endings for unix
@@ -130,6 +133,9 @@ Vagrant.configure("2") do |config|
     # TODO: CLEAN UP script, move as much as possible to a separate file
     db_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
+        # Ensure script has correct line endings for unix
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-db-server.sh
+
         # Set the MySQL root password in advance
         export DEBIAN_FRONTEND=noninteractive # for debconf
         # Set the MySQL root password in advance
