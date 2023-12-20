@@ -5,10 +5,13 @@
 Today, more and more services are undergoing a digital transformation, to make use of the benefits in communication and distribution that come with it. Healthcare systems are also a part of this transition, for example through the use of Electronic Health Records (EHR's). These records are used for digitizing patient data management, which makes it easier for healthcare providers to manage the data, and for the broader healthcare services to share patient data between themselves. 
 This means MediTrack can greatly ehance health services and facilitate collaboration between healthcare entities. However, healthcare data is very sensitive, and needs to be handled in a way that guarantees the security of the data. 
 
-The first part of the project, secure documents, is about designing and implementing a way to ensure confidentiality and authenticity for the EHR's. This is done throgh the design and implementation of a custom cryptographic library, [CryptoLib](./src/MediTrack/CryptoLib/CryptoLib.cs). CryptoLib provides essential cryptographic operations such as document protection and sender verification. Through this use of encryption and digital signatures, CryptoLib ensures the confidentiality and authenticity of patient data within the EHR's. 
+The first part of the project, secure documents, is about designing and implementing a way to ensure confidentiality and authenticity for the EHR's. This is done through the design and implementation of a custom cryptographic library, [CryptoLib](./src/MediTrack/CryptoLib/CryptoLib.cs). CryptoLib provides essential cryptographic operations such as document protection and sender verification. Through this use of encryption and digital signatures, CryptoLib ensures the confidentiality and authenticity of patient data within the EHR's. 
 
-<!ADD THE REST AS WE GO ALONG>
-(_Provide a brief overview of your project, including the business scenario and the main components: secure documents, infrastructure, and security challenge._)
+The second part of the project, infrastructure, is about setting up and configuring servers to support the MediTrack system. This is done through setting up a virtual environment with 5 machines and 3 networks, configuring the interfaces and programs running on each machine, and setting up the firewall and secure TLS/SSL communications for the system. 
+
+The third and final part of the project is the security challenge, where we were introduced to some security challenges to handle for the MediTrack system. These challenges required us to expand our existing solution, as we will describe later in this report. 
+
+
 
 (_Include a structural diagram, in UML or other standard notation._)
 
@@ -54,13 +57,46 @@ In accordance with the project task requirements, our functions were designed as
 We chose to use the following setup for our network: 
 ![Infrastructure](/img/Infrastructure.png)
 
-(_Justify the choice of technologies for each server._)
+We network setup contains two external machines, the client and the authentication server, and a firewall server acting as a bridge between the external and internal networks. The internal networks consist of one DMZ network, where the application server is, and one internal network where we find the database. The application server is the component of our system that ties together the other components to create a functioning MediTrack system.
+
+The setup of our external machines is pretty simple. Each one is running a dotnet program to communicate with the other devices in the system. 
+(something more about functionality?)
+
+The firewall server runs iptables for firewall configurations and Network Address Translation (NAT). We decided to go with iptables for all the firewall configurations, because it is easy to set up and could be used for both the firewall rules and the NAT rules. We first started using ufw for the rules, because of the simplicity of the program, but had some difficulties combining this with the NAT and therefore decided to move over to all iptables for the firewall server. 
+
+The application server runs the .NET program we developed and contains the main functionality of the secure documents section. We chose to use this technology due to the teams familiarity with #C and the .NET-framework, which provides a robust and scalable environment for the main program. Since this was the framework chosen for the main secure documents functionality, we continued using this for the communicating programs on the client and authentication server as well. 
+
+For the database server, we are using MySQL. Again, this was selected mainly due to the teams familiarity with the system, as well as the widespread use it already has leading to a big community and therefore it is easy to find information on using the system. It is also easy to set up, as well as compatible with our .NET application. 
+
+- ADD VAGRANT REASONING HERE, MAYBE?
 
 #### 2.2.2. Server Communication Security
 
-(_Discuss how server communications were secured, including the secure channel solutions implemented and any challenges encountered._)
+Communication security in this system is based mainly on three things
+- Encrypting the EHR's, as per the _secure documents_ section
+- Use of TLS/SSL for communication between devices
+- The firewall server
 
-(_Explain what keys exist at the start and how are they distributed?_)
+These three things together work to ensure confidentiality for our system. On top of this, the digital signatures detailed in the section on [secure document design](#211-design) also provide authenticity for the communications. 
+
+The use of both TLS/SSL and encryption of the EHR's work to provide security in layers. Not only is the sensitive content of the health records encrypted, but the communication channel they are transferred over is also encrypted. This adds an extra layer of security. 
+
+The firewall adds security for the application server and database server through the use of NAT and firewall rules. We set the rules to drop as default, and only allow specific traffic that matches flows we expect to see from the legitimate communications. 
+ 
+- ADD SOMETHING ABOUT FRESHNESS
+- ADD SOMETHING ABOUT KEY EXCHANGE
+- SHOULD WE INCLUDE THE SPECIFIC FIREWALL RULES?
+
+CHALLENGES?
+
+We faced some issues with setting up the firewall rules, as we found it difficult to keep track of which ports and addresses were used when communication arrived at the different interfaces for the firewall. We were also relatively unfamiliar with the use of iptables, so learning the syntax and use cases for the technology was also a big part of the challenge here. 
+
+One such challenge was the result of our use of Vagrant for the system, as we don't build machines that are intended to be used with the GUI. The normal use of Vagrant systems is to SSH into the machines as needed. Therefore, when we first set up the firewall rules, we were unable to connect to the firewall server since the firewall rules didn't allow SSH connections. Because of this, we had to add an iptable rule to allow SSH connections directed at the firewall server, to be able to access it using Vagrant. This access was important for testing the system, as well as for getting the network traces of running the security tests.
+
+- any other ones to mention here? Was the ceritificate implementation fine?
+
+KEY DISTRIBUTION
+- ANSWER THIS (_Explain what keys exist at the start and how are they distributed?_)
 
 ### 2.3. Security Challenge
 
