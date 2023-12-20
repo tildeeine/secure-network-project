@@ -1,8 +1,14 @@
 #!/usr/bin/bash
 
-# vagrant ssh app_server -c "screen -S server -dm /MediTrackApp/MediTrackBackend"
-# echo "Sent screen to app_server"
-vagrant ssh auth_server -c "screen -S server -dm /AuthServerApp/AuthServer"
-echo "Sent screen to auth_server"
-vagrant ssh client_machine -c "screen -S client -dm /ClientApp/Client"
-echo "Sent screen to client_machine"
+# TERM=xterm vagrant ssh app_server -c "screen -S server -dm cd /MediTrack/MediTrackBackend/; dotnet run"
+echo "Please press <C-a>d to detach."
+echo "Setting up app_server"
+TERM=xterm vagrant ssh app_server -c "screen -mS server dotnet run --project /MediTrack/MediTrackBackend/"
+
+echo "Please press <C-a>d to detach."
+echo "Setting up auth_server"
+TERM=xterm vagrant ssh auth_server -c "screen -mS server dotnet run --project /MediTrack/AuthServer/"
+
+echo "Please press <C-a>d to detach."
+echo "Setting up client_machine"
+TERM=xterm vagrant ssh client_machine -c "screen -mS client dotnet run --project /MediTrack/Client/ start doctor 000000000 /MediTrack/keys/Bob.priv.pem /MediTrack/keys/Bob.pub.pem"

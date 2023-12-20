@@ -177,7 +177,7 @@ Vagrant.configure("2") do |config|
     end
 
     # Create shared folder for compiling auth server code
-    auth_config.vm.synced_folder "../MediTrack/AuthServer", "/AuthServer"
+    auth_config.vm.synced_folder "../MediTrack", "/MediTrack"
 
     # Install .NET and compile project
     auth_config.vm.provision "shell" do |shell|
