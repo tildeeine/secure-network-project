@@ -16,7 +16,7 @@ Vagrant.configure("2") do |config|
 
   # Individual VM configurations
   # Firewall Server VM
-  config.vm.define "firewall" do |fw_config|
+  config.vm.define "fw_server" do |fw_config|
     fw_config.vm.box = "bento/ubuntu-20.04"
     fw_config.vm.hostname = "a31-MediTrack-firewall-server"
     fw_config.vm.network "public_network", type: "static", ip: "192.168.3.10"
@@ -48,11 +48,11 @@ Vagrant.configure("2") do |config|
         sudo apt install ufw
 
         # Ensure script has correct line endings for unix
-        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-fw.sh
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-fw-server.sh
 
         # Run initial setup script
-        sudo chmod +x /vagrant/init-scripts/init-fw.sh
-        /bin/sh /vagrant/init-scripts/init-fw.sh
+        sudo chmod +x /vagrant/init-scripts/init-fw-server.sh
+        /bin/sh /vagrant/init-scripts/init-fw-server.sh
       SHELL
     end
   end
@@ -71,7 +71,6 @@ Vagrant.configure("2") do |config|
     # Create shared folder for compiling app server code.
     app_config.vm.synced_folder "../MediTrack", "/MediTrack"
 
-    # Internal Network sw-1
     # Internal Network sw-1
     app_config.vm.network "private_network", type: "static", ip: "192.168.0.20", virtualbox__intnet: "sw-1", auto_config: false
     # Enable Promiscuous Mode for sw-1
@@ -104,12 +103,10 @@ Vagrant.configure("2") do |config|
 
       SHELL
     end
-
-    # TODO: Remove temp internet access
   end
 
   # Database Server VM
-  # Issues with database creation, :149
+  # Issues with database creation
   config.vm.define "db_server" do |db_config|
     db_config.vm.box = "bento/ubuntu-20.04"
     db_config.vm.hostname = "a31-MediTrack-db-server"
@@ -124,42 +121,39 @@ Vagrant.configure("2") do |config|
     db_config.vm.synced_folder "../MediTrack", "/MediTrack"
 
     # Internal Network sw-2
-    db_config.vm.network "private_network", type: "static", ip: "192.168.1.30", virtualbox__intnet: "sw-2", auto_config: false
+    db_config.vm.network "private_network", type: "static", ip: "192.168.1.30", virtualbox__intnet: "sw-2", auto_config: false#, adapter: 1
     # Enable Promiscuous Mode for sw-2
     db_config.vm.provider "virtualbox" do |vb|
-      vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
+      vb.customize ["modifyvm", :id, "--nicpromisc1", "allow-all"]
     end
 
     # TODO: CLEAN UP script, move as much as possible to a separate file
     db_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
-        # This line works
+        # Set the MySQL root password in advance
+        export DEBIAN_FRONTEND=noninteractive # for debconf
+        # Set the MySQL root password in advance
+        # echo "mysql-community-server mysql-community-server/data-dir select ''" | sudo debconf-set-selections
+        echo "mysql-community-server mysql-community-server/root-pass password root" | sudo debconf-set-selections
+        echo "mysql-community-server mysql-community-server/re-root-pass password root" | sudo debconf-set-selections
+
+        # # Set the default authentication plugin in advance
+        echo "mysql-community-server mysql-server/default-auth-override select Use Strong Password Encryption (RECOMMENDED)" | sudo debconf-set-selections
+
+        #! Seems like something here works, cause i only had to provide "YES" to secure something mode
         mkdir mysql-installers && tar -xvf /vagrant/installers/mysql-server_8.0.35-1ubuntu20.04_amd64.deb-bundle.tar -C mysql-installers
-        # From this line doesn't work, file not found
         sudo cp /vagrant/installers/libmecab2_0.996-10build1_amd64.deb mysql-installers
         # Installing mysql and all dependencies
         cd mysql-installers && sudo dpkg -i libmecab2_0.996-10build1_amd64.deb && sudo dpkg -i mysql-common_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-client-plugins_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-client-core_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-client_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-client_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-server-core_8.0.35-1ubuntu20.04_amd64.deb && sudo dpkg -i mysql-community-server_8.0.35-1ubuntu20.04_amd64.deb
 
         sudo service mysql start
 
-        # Run MySQL secure installation script
-        sudo mysql -u root < /vagrant/database-setup/mysql-secure-installation.sql
-
-        # Create MySQL database and user
-        mysql -u root -p a31-MediTrack < /vagrant/database-setup/create-database.sql
-
-        # Copy init.sql to the MySQL server's initialization directory
-        sudo cp /MediTrack/MediTrackBackend/Migrations/init.sql /etc/mysql/conf.d/
+        # Set up MySQL user, and run init.sql to create database and tables
+        mysql -uroot -p'root' < /vagrant/database-setup/create-user.sql
+        mysql -umysql -p'1234' --database='meditrack' < /MediTrack/MediTrackBackend/Migrations/init.sql
 
         # Restart MySQL to apply changes
         service mysql restart
-
-        # Run migration script
-        # Ensure script has correct line endings for unix
-        sudo apt install dos2unix && dos2unix /MediTrack/MediTrackBackend/migrate.sh
-
-        chmod +x /MediTrack/MediTrackBackend/migrate.sh
-        cd /MediTrack/MediTrackBackend && /bin/sh ./migrate.sh init
       SHELL
     end
   end

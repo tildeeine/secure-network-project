@@ -6,10 +6,12 @@
 sudo ip addr add 192.168.0.20/24 dev eth0
 sudo ip link set dev eth0 up
 
-#? Set External Firewall as default gateway
-# sudo ip route add default via 192.168.0.10
-
 # Restart to apply changes
 sudo systemctl restart systemd-networkd
 
-# ! edit the corresponding /etc/network/interfaces file.
+# Write configurations to /etc/network/interfaces
+echo "
+iface eth0 inet static         
+        address 192.168.0.20
+        netmask 255.255.255.0
+" | sudo tee -a /etc/network/interfaces
