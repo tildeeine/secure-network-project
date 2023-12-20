@@ -7,23 +7,19 @@ ENV['VAGRANT_DEFAULT_PROVIDER'] = "virtualbox"
 Vagrant.configure("2") do |config|
   # Base configuration for all VMs
 
-  # Disable VirtualBox Guest Additions auto-update
-  # Cmd below must be commented out if vbguest not installed on host
-  config.vbguest.auto_update = false
-
   # Set up synced folders
   config.vm.synced_folder ".", "/vagrant"
 
   # Individual VM configurations
   # Firewall Server VM
   config.vm.define "fw_server" do |fw_config|
-    fw_config.vm.box = "bento/ubuntu-20.04"
+    fw_config.vm.box = "ubuntu/focal64"
     fw_config.vm.hostname = "a31-MediTrack-firewall-server"
-    fw_config.vm.network "public_network", type: "static", ip: "192.168.3.10"
+    fw_config.vm.network "public_network", type: "static", ip: "192.168.2.10"
 
     # VM name
     fw_config.vm.provider "virtualbox" do |vb|
-      #vb.gui = false
+      vb.gui = false #? Test true
       vb.name = "a31-MediTrack-firewall-server"
     end
 
@@ -48,7 +44,6 @@ Vagrant.configure("2") do |config|
         echo "iptables-persistent iptables-persistent/autosave_v4 boolean true" | sudo debconf-set-selections
         echo "iptables-persistent iptables-persistent/autosave_v6 boolean true" | sudo debconf-set-selections
         sudo apt install -y iptables-persistent
-        sudo apt install ufw
 
         # Ensure script has correct line endings for unix
         sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-fw-server.sh
@@ -62,7 +57,7 @@ Vagrant.configure("2") do |config|
 
   # Application Server VM
   config.vm.define "app_server" do |app_config|
-    app_config.vm.box = "bento/ubuntu-20.04"
+    app_config.vm.box = "ubuntu/focal64"
     app_config.vm.hostname = "a31-MediTrack-app-server"
 
     # VM name
@@ -111,7 +106,7 @@ Vagrant.configure("2") do |config|
   # Database Server VM
   # Issues with database creation
   config.vm.define "db_server" do |db_config|
-    db_config.vm.box = "bento/ubuntu-20.04"
+    db_config.vm.box = "ubuntu/focal64"
     db_config.vm.hostname = "a31-MediTrack-db-server"
 
     # VM name
@@ -134,7 +129,7 @@ Vagrant.configure("2") do |config|
     db_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
         # Ensure script has correct line endings for unix
-        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-db-server.sh
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-db-server.sh #!
 
         # Set the MySQL root password in advance
         export DEBIAN_FRONTEND=noninteractive # for debconf
@@ -166,7 +161,7 @@ Vagrant.configure("2") do |config|
 
   # Authentication Server
   config.vm.define "auth_server" do |auth_config|
-    auth_config.vm.box = "bento/ubuntu-20.04"
+    auth_config.vm.box = "ubuntu/focal64"
     auth_config.vm.hostname = "a31-MediTrack-auth-server"
     auth_config.vm.network "public_network", type: "static", ip: "192.168.3.100"
 
@@ -205,7 +200,7 @@ Vagrant.configure("2") do |config|
 
   # Client Machine
   config.vm.define "client_machine" do |client_config|
-    client_config.vm.box = "bento/ubuntu-20.04"
+    client_config.vm.box = "ubuntu/focal64"
     client_config.vm.hostname = "a31-MediTrack-client-machine"
     client_config.vm.network "public_network", type: "static", ip: "192.168.4.50"
 
@@ -230,7 +225,7 @@ Vagrant.configure("2") do |config|
         echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
 
         # Ensure script has correct line endings for unix
-        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
+        #sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh
 
         # Compile the Client code
         # cd /MediTrack/Client && dotnet publish -o ../../ClientApp && cd ../..
