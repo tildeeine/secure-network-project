@@ -5,7 +5,7 @@ generate_certificate(){
        echo "Generate certificate takes an argument: name"
        exit 1
     fi
-    openssl req -new -newkey rsa:4096 -nodes -keyout "$1.priv.pem" -out "$1-request.csr" -subj "/CN=$1"
+    openssl req -new -newkey rsa:2048 -nodes -keyout "$1.priv.pem" -out "$1-request.csr" -subj "/CN=$1"
     openssl rsa -in "$1.priv.pem" -pubout -out "$1.pub.pem"
 }
 

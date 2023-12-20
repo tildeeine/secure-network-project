@@ -50,59 +50,14 @@ class Program
     static string MEDITRACK_HOST = "https://localhost:5001";
     static string AUTH_SERVER_HOST = "https://localhost:5002";
 
-    //     static string privateKey = @"-----BEGIN PRIVATE KEY-----
-    // MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDN8JyiQ9eiTGiF
-    // 8HZ+haXSByvYlzpOcQfYz0xMdeFau+/i2gf7AL1OLtYAxVRhHHxntsNR5T8hX521
-    // pbCuxca66mosjz0gpyIaYC/00Ie46tylG17lBb54ken5bySkRIdkkVao9cAomg/c
-    // VOa3HCIeb76G8JeVhbd/QVmuwnmEEscrWXD4+gSnBRK6oIZ+/AJ5iajJ9i29mDNM
-    // Tkogm8Rf7WjlFG4g3Wdh3u4DagXVOzjarDSVe8rPpBcteFovsOk1shIyZogrVFvA
-    // LqMa8L3dTzpfODtyxLK8uIHlSkDpls17OY2pptETVPIPL39W4PHihNcNrqOQVy1b
-    // fW9sYJIbAgMBAAECggEAZRusyz3jsJsy9g+JHbUgJG3A6SXWSozT/W5JV4DIk3OR
-    // 4x6IrINAbhIwn1BCjSsfKQxh+ONEi24WUAh5JlWTrFFKr3Xj3RQxeiGfaeK3v+IP
-    // UkCN5oNbcHazGPOoWb4LeySgF3QQU97Pyq0kWOJHHgpe0IFu6sorvR6omVSBtIVh
-    // Y1GxJ4uja6wBEz/37qJbjh31PCLU4n2ibyhizUeW/wLbCxysfgtNybiW0nDQf9lc
-    // PiQdX4Mcb00oaX8Rih2op/nGjcV1q+bBA5czMSAXEwIdGIkwfdxkdmpRdKpuWVDs
-    // 8S1HutREFo/9Zhm0AkBs6eK0pcGxMyd9tQ9QQ6HNAQKBgQD5p0Ev1uAnh+C/Huqd
-    // CRIugPbTP11IFejW5TH2bD3Xj3ZmpJC09v2bbiavD2yQR9M3lOaGeHlN8Z2kbIIR
-    // qzW9xuPm4SwCE5FXS8U6j6wQZFX4vmn2/S+/fRukxQ5cE1cuJSk2mVuK9PlDfXQ+
-    // KHJj3pI/29gIOmy5EDdQqXgKMwKBgQDTLN6t5q1xv+0atg2o7kHWo/iFIody6l69
-    // r3VLQfgNGJDFSqMbGWP3k24nMAPNAIjAi2cBNhV82RyJfMwPKNTk3SesNkXTevTx
-    // iDSGZKuZFHYCZxbBqpA4u1ufpe54usHte0gGzNtizVzsY3cRmnlhwqVUzduEIOPT
-    // 7HWPho1AeQKBgDDsaObiGf1FMHLjsSBjBbAdT8FoGnSk7oMmWRssbRYQJCjLORxt
-    // hpduB6CoyiKgILE0udRCSatPnQ/6v6aMwbRWBJVbLQ+fHA1aaOUoAJUZxItBbWyc
-    // gz3oW4F3qG+8zonZeHEdroXVqf9i12PS80/E7y4afARoxqOhnOVuwHpnAoGAGuip
-    // y2EMkuUQ8olmPjN2AkLMpTJcLiF9RxB3kspqMEkEEY/MLuTSXzbTH303zsSVqGtb
-    // CcV5gXos77wOSJQ8ZJllt8UGqscNNUXU45cqYow/6Vh3huAUFpaRO0uqkonBsmA2
-    // Ml+iSPnAMIMQJhcYBoQGC0NcCH8kaNnFtS9BCokCgYEAv+SfOrD238t7jWc780Um
-    // PpZu2iSk3D2nlGJK/gzwb/98t2p/et6cf9/H/CJqRSAzvWzmQjL1+Q5VHDgB9Ogt
-    // HqKX44HzZxwOIHZEPWGOarys77DZnFiwNKhGslgRgX36/wPUPDw/dM+tuUu3Neyl
-    // JPNYiPCHfFdRRZZApLecZUw=
-    // -----END PRIVATE KEY-----";
-    //
-    //     static string publicKey = @"-----BEGIN PUBLIC KEY-----
-    // MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzfCcokPXokxohfB2foWl
-    // 0gcr2Jc6TnEH2M9MTHXhWrvv4toH+wC9Ti7WAMVUYRx8Z7bDUeU/IV+dtaWwrsXG
-    // uupqLI89IKciGmAv9NCHuOrcpRte5QW+eJHp+W8kpESHZJFWqPXAKJoP3FTmtxwi
-    // Hm++hvCXlYW3f0FZrsJ5hBLHK1lw+PoEpwUSuqCGfvwCeYmoyfYtvZgzTE5KIJvE
-    // X+1o5RRuIN1nYd7uA2oF1Ts42qw0lXvKz6QXLXhaL7DpNbISMmaIK1RbwC6jGvC9
-    // 3U86Xzg7csSyvLiB5UpA6ZbNezmNqabRE1TyDy9/VuDx4oTXDa6jkFctW31vbGCS
-    // GwIDAQAB
-    // -----END PUBLIC KEY-----";
-    //
-    static string serverPublicKey = @"-----BEGIN PUBLIC KEY-----
-    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAs/0S3fRK58o7ykUZI3cm
-    f+OswwKgbGb3C/yTUa2QGXIYhJLz034jrr7Pw/KVnaF/4aRCMg/NpDQPlEAS3M8m
-    m3BtQSldNbT4xHVk25poO/HA0IcRYClupnsbedD9u0SiOM7WOvQnVewbC7BBl2oD
-    TUtRrADL62Wq/A92RSwBMrVo/YhYbSvwqdsOOij41rWZlBRL31H1v2MHEICqFibT
-    sIYgTRR4xnpjsJsWqAJpZWrbraFxVpk/zQ4V7/Vdg6dvPhRgSCNSpzWILR12qDoB
-    K7FlN82qGCKm3MNehyPkASftMb/2VNvWfqmiikBw7H0+ZPyKt7d82HYTJomC30gb
-    vwIDAQAB
-    -----END PUBLIC KEY-----";
+    static string serverPublicKey = null!; 
 
     static int messageId = 0;
 
     private static async Task Main(string[] args)
     {
+        serverPublicKey = File.ReadAllText("../keys/meditrack-server.pub.pem");
+
         HttpClientHandler clientHandler = new HttpClientHandler();
         clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { 
             Console.WriteLine(sender);
