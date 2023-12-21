@@ -76,7 +76,37 @@ Here, we will first give instructions for setting up Vagrant, before we explain 
     | Authentication server | auth_server    |
     | Firewall server       | fw_server      |
 
-You should now be able to access the VMs. 
+    You should now be able to access the VMs. 
+5. To run the application from the client machine, you need to run the application server and authentication server programs on those machines. To do this, open two tabs in a terminal, and navigate to the folder of this project. Now, for each of the machines, ssh into the machine and then start running the project:
+    For the app_server
+    ```
+    vagrant ssh app_server
+    ```
+    Once the SSH session is established, run the program
+    
+    ```
+    sudo dotnet run --project /MediTrack/MediTrackBackend/
+    ```
+    Let this terminal continue to run in the background. 
+
+    Now, do the same for the auth server:
+    
+    ```
+    vagrant ssh auth_server
+    ```
+    After the SSH session is established, run:
+    
+    ```
+    sudo dotnet run --project /MediTrack/AuthServer/
+    ```
+6. Now, you can start running the project from the client. SSH into the client machine, and run 
+    
+    ```
+    cd /MediTrack/Client/
+    ```
+    
+    
+    
 
 When you are done and want to stop running the VMs, you can use halt:
 ```sh
@@ -261,10 +291,18 @@ dotnet --version
 This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors. 
 
 **Test setup:**
+
 The client can be considered the last entity to connect to the network, as it is connected every time a patient or a physician wants to perform a task. You should therefore verify that all other machines in the system are up and running as intended before testing this machine. 
 
-INSERT TEST COMMANDS
+Make sure you are running the Application server and Authentication server programs on the app server and auth server machines. 
 
+To verify that everything is working as intended, you can run the following command to log in as one of the test doctors, with identity 00000000:
+
+```
+dotnet run start doctor 000000000 /MediTrack/keys/Bob.priv.pem /MediTrack/keys/Bob.pub.pe
+```
+
+Verify that the ip was set up as intended:
 ```sh
 ip addr show enp0s8
 ```
@@ -274,19 +312,72 @@ This command displays the network configurations for the VM. The provisioning sc
 
 Now that all the networks and machines are up and running, we can have a look at the actual functionality of the system. 
 
+The main functionality is the patient and the physicians obtaining the relevant EHR's. First, we will show the patient side functionality. 
 
-*(give a tour of the best features of the application; add screenshots when relevant)*
-- Show the different functions of the client-side system
-- Show what it looks like when we encrypt or decrypt a record
-- Perform simulated attacks to show the defenses in action
-    - Use nmap and try port scanning from client on firewall server
-    - Show "packet interception" to show that both the communication itself (TLS) and the packets (secure documents) are encrypted as a security mechanism
+**The patient wants to log in and get their records**
+
+The patient can log in to the system by providing their keys, as well as their NIC as a unique identifier. 
+
+For the demonstration, we have set up the patient and the doctor to be the same default user, but using the parameter patient logs you in as the patient. Run the following command:
 
 ```sh
-$ demo command
+dotnet run start patient 000000000 /MediTrack/keys/Bob.priv.pem /MediTrack/keys/Bob.pub.pem
 ```
+You should now get an output that shows you the possible commands to run for a patient. The output should look like this:
 
-*(replace with actual commands)*
+```
+Patient Commands:
+    help
+    get Get All patient info
+    change Changes to doctor mode
+```
+The `get` command allows a patient to get all their relevant health data. 
+
+INSERT WHAT THIS OUTPUT LOOKS LIKE
+
+**A patient that is also a doctor wants to change modes**
+
+The `change` command exists for doctors who are also registered as patients at the same hospital. this lets them easily change between patient and doctor mode. See the expected output below:
+![image of change output](./img/demo/cmd_change.png)
+You should now see that the person has changed mode to doctor by the output of possible commands. 
+
+The doctor mode has the equivalent change command that will change them into patient mode if they are registered as patients as well at the hospital. Of course, for the `change` command in both modes, it is only executed if the user is registered as the other mode. 
+
+**A doctor wants to get a patients health records**
+
+To log in as a doctor, you could either use the `change` mode mentioned above if you are a doctor already logged in as a patient, or run the dotnet command but with doctor as a parameter instead of patient: 
+```sh
+dotnet run start doctor 000000000 /MediTrack/keys/Bob.priv.pem /MediTrack/keys/Bob.pub.pem
+```
+You should now get the following output, showing the possible commands to execute for a doctor:
+```
+Doctor Commands:
+    help
+    get patient-civil-number(NIC) Attempt to get patient info
+    emergency patient-civil-number(NIC) Emergency situation, so the physician is able to get all medical records
+    change Changes to patient mode
+```
+To retrieve a patient's health records, the doctor can use the `get` method with the patient's NIC.
+
+The output of this command should be the patients health records, but where only the records that are related to the requesting doctor's speciality are shown in plaintext. The records for other specialities should still be encrypted. 
+
+INSERT RESULT OF THE GET METHOD
+
+**A doctor needs to override the controlled sharing in an emergency**
+
+We also implement an emergency command that allows doctors to override the controlled sharing to get all patient data in an emergency. This can be used by running the `emergency` command with the patients NIC. 
+
+The output of this command should be all of the patients health records, decrypted and readable to the doctor, also the ones unrelated to the doctors specialization. 
+
+**Someone tries to log in with invalid keys**
+If someone tries to log in with invalid keys, they should not get access to the system. 
+
+- show the commands the images of the output. "A client wants to do this", then insert the commands and instructions for doing this, and then for example print the secure docuemnt before its processed. Show in action that what you hav ein the report already works in practice. 
+    - How to show this?
+    - tcpdump screenshot
+    - what the server returns, what the client receives from the server. print that before you process it. 
+- console.writeline added on multiple programs. 
+*(give a tour of the best features of the application; add screenshots when relevant)*
 
 *(IMPORTANT: show evidence of the security mechanisms in action; show message payloads, print relevant messages, perform simulated attacks to show the defenses in action, etc.)*
 
