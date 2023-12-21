@@ -331,9 +331,11 @@ Patient Commands:
     get Get All patient info
     change Changes to doctor mode
 ```
-The `get` command allows a patient to get all their relevant health data. 
+The `get` command allows a patient to get all their relevant health data. The expected output is as shown below:
 
-INSERT WHAT THIS OUTPUT LOOKS LIKE
+![img](./img/demo/bob_patient_received_data_after_decrypt.png)
+
+You can here see that the patient can see all their medical records decrypted, and that the consultation records contain the physician signature to verify each record. 
 
 **A patient that is also a doctor wants to change modes**
 
@@ -359,27 +361,33 @@ Doctor Commands:
 ```
 To retrieve a patient's health records, the doctor can use the `get` method with the patient's NIC.
 
-The output of this command should be the patients health records, but where only the records that are related to the requesting doctor's speciality are shown in plaintext. The records for other specialities should still be encrypted. 
+The output of this command should be the patients health records, but where only the records that are related to the requesting doctor's speciality are shown in plaintext. The records for other specialities should still be encrypted. The image below shows the expected result for the `get` command:
 
-INSERT RESULT OF THE GET METHOD
+![img](./img/demo/doctor_received_data_after_decrypt.png)
+
+Here you can see the data shown before and after the doctor encrypts it. Note that only the relevant data for this doctor's specialization is decrypted, as per the controlled sharing functionality. 
 
 **A doctor needs to override the controlled sharing in an emergency**
 
 We also implement an emergency command that allows doctors to override the controlled sharing to get all patient data in an emergency. This can be used by running the `emergency` command with the patients NIC. 
 
-The output of this command should be all of the patients health records, decrypted and readable to the doctor, also the ones unrelated to the doctors specialization. 
+The output of this command should be all of the patients health records, decrypted and readable to the doctor, including the ones unrelated to the doctors specialization. See the expected output below, where Charlie uses the emergency command: 
 
-**Someone tries to log in with invalid keys**
-If someone tries to log in with invalid keys, they should not get access to the system. 
+![img](./img/demo/charlie_emergency_situation.png)
 
-- show the commands the images of the output. "A client wants to do this", then insert the commands and instructions for doing this, and then for example print the secure docuemnt before its processed. Show in action that what you hav ein the report already works in practice. 
-    - How to show this?
-    - tcpdump screenshot
-    - what the server returns, what the client receives from the server. print that before you process it. 
-- console.writeline added on multiple programs. 
-*(give a tour of the best features of the application; add screenshots when relevant)*
+**The Server receives encrypts data**
 
-*(IMPORTANT: show evidence of the security mechanisms in action; show message payloads, print relevant messages, perform simulated attacks to show the defenses in action, etc.)*
+When the server receives a request for some data, it will get the requested data from the datbase, and the use the security library we developed for `secure documents` to protect the data. The following image shows what the data looks like before and after the protection is called. Note that this was shown by adding extra logging commands in the dotnet code, and we don't usually show this data in the CLI. 
+
+![img](./img/demo/server_before_and_after_encryption.png)
+
+**An attacker attempts to impersonate another user**
+
+In our example, the attacker is Bob, trying to impersonate Charlie. The attacker tries to use Charlie's NIC, but with their own keypair. 
+
+![img](./img/demo/bob_doctor_impersonating_charlie.png)
+
+As you can see from the image, we get the error message `[Error] Bad Request`.
 
 This concludes the demonstration.
 
