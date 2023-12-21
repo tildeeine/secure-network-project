@@ -47,7 +47,9 @@ class Program
     get Get All patient info
     change Changes to doctor mode";
 
-    static string MEDITRACK_HOST = "https://localhost:5001";
+    //static string MEDITRACK_HOST = "https://localhost:5001";
+	//static string MEDITRACK_HOST = "https://192.168.2.10:5001";
+    static string MEDITRACK_HOST = "https://192.168.2.10";
     static string AUTH_SERVER_HOST = "https://localhost:5002";
 
     static string serverPublicKey = null!; 

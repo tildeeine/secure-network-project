@@ -11,4 +11,4 @@ TERM=xterm vagrant ssh auth_server -c "screen -mS server dotnet run --project /M
 
 echo "Please press <C-a>d to detach."
 echo "Setting up client_machine"
-TERM=xterm vagrant ssh client_machine -c "screen -mS client dotnet run --project /MediTrack/Client/ start doctor 000000000 /MediTrack/keys/Bob.priv.pem /MediTrack/keys/Bob.pub.pem"
+TERM=xterm vagrant ssh client_machine -c 'screen -mS client bash -c "cd /MediTrack/Client/; dotnet run start doctor 000000000 /MediTrack/keys/Bob.priv.pem /MediTrack/keys/Bob.pub.pem"'

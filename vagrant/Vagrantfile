@@ -15,7 +15,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "fw_server" do |fw_config|
     fw_config.vm.box = "ubuntu/focal64"
     fw_config.vm.hostname = "a31-MediTrack-firewall-server"
-    fw_config.vm.network "public_network", type: "static", ip: "192.168.2.10"
+    # fw_config.vm.network "public_network", type: "static", ip: "192.168.2.10"
+    fw_config.vm.network "private_network", type: "static", ip: "192.168.2.10", virtualbox__intnet: "sw-0", auto_config: false
 
     # VM name
     fw_config.vm.provider "virtualbox" do |vb|
@@ -23,8 +24,11 @@ Vagrant.configure("2") do |config|
       vb.name = "a31-MediTrack-firewall-server"
     end
 
+    # Public network
+    # fw_config.vm.network "public_network", type: "static", ip: "192.168.2.10", virtualbox__intnet: "sw-"
+
     # Internal Network sw-1
-    fw_config.vm.network "private_network", type: "static", ip: "192.168.0.10",virtualbox__intnet: "sw-1", auto_config: false
+    fw_config.vm.network "private_network", type: "static", ip: "192.168.0.10", virtualbox__intnet: "sw-1", auto_config: false
     # Enable Promiscuous Mode for sw-1
     fw_config.vm.provider "virtualbox" do |vb|
       vb.customize ["modifyvm", :id, "--nicpromisc2", "allow-all"]
@@ -79,7 +83,9 @@ Vagrant.configure("2") do |config|
     app_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
         # Do necessary installations
-        mv /vagrant/installers/dotnet-install.sh .
+        # TODO: see this
+        #mv /vagrant/installers/dotnet-install.sh .
+        wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
         chmod +x ./dotnet-install.sh
         /bin/bash ./dotnet-install.sh --version latest --install-dir /usr/local/bin
 
@@ -163,7 +169,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "auth_server" do |auth_config|
     auth_config.vm.box = "ubuntu/focal64"
     auth_config.vm.hostname = "a31-MediTrack-auth-server"
-    auth_config.vm.network "public_network", type: "static", ip: "192.168.3.100"
+    auth_config.vm.network "private_network", type: "static", ip: "192.168.2.100", virtualbox__intnet: "sw-0", auto_config: false
+    # client_config.vm.network "public_network", type: "static", ip: "192.168.4.50", 
 
     # VM name
     auth_config.vm.provider "virtualbox" do |vb|
@@ -177,6 +184,13 @@ Vagrant.configure("2") do |config|
     # Install .NET and compile project
     auth_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
+        # Ensure script has correct line endings for unix
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-auth-server.sh #!
+
+        # Run initial setup script
+        sudo chmod +x /vagrant/init-scripts/init-auth-server.sh
+        /bin/sh /vagrant/init-scripts/init-auth-server.sh
+
         # Do necessary installations
         sudo apt update
         wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
@@ -185,9 +199,6 @@ Vagrant.configure("2") do |config|
 
         echo "export DOTNET_ROOT=/usr/local/bin" >> /home/vagrant/.bashrc
         echo "export PATH=$PATH:$DOTNET_ROOT" >> /home/vagrant/.bashrc
-
-        # Ensure script has correct line endings for unix
-        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-app-server.sh
 
         # Change to the AuthServer directory, publish the .NET program, and change back to the parent directory
         # cd /AuthServer && dotnet publish -o ../AuthServerApp && cd ..
@@ -202,7 +213,7 @@ Vagrant.configure("2") do |config|
   config.vm.define "client_machine" do |client_config|
     client_config.vm.box = "ubuntu/focal64"
     client_config.vm.hostname = "a31-MediTrack-client-machine"
-    client_config.vm.network "public_network", type: "static", ip: "192.168.4.50"
+    client_config.vm.network "private_network", type: "static", ip: "192.168.2.50", virtualbox__intnet: "sw-0", auto_config: false
 
     # VM name
     client_config.vm.provider "virtualbox" do |vb|
@@ -215,6 +226,14 @@ Vagrant.configure("2") do |config|
 
     client_config.vm.provision "shell" do |shell|
       shell.inline = <<-SHELL
+
+        # Ensure script has correct line endings for unix
+        sudo apt install dos2unix && dos2unix /vagrant/init-scripts/init-client-machine.sh #!
+
+        # Run initial setup script
+        sudo chmod +x /vagrant/init-scripts/init-client-machine.sh
+        /bin/sh /vagrant/init-scripts/init-client-machine.sh
+
         # Do necessary installations
         sudo apt update
         wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh

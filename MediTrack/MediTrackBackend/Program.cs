@@ -52,6 +52,9 @@ clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, 
 };
 using HttpClient client = new HttpClient(clientHandler);
 
+app.MapGet("/", () => {
+		Console.WriteLine("Hellow worlds");
+			});
 app.MapGet("/patients/{patientNIC}", async (
     HttpRequest request,
     MediTrackDb db,
