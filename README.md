@@ -210,7 +210,7 @@ This command checks if MySQL is installed. You should see the version of MySQL i
 First, check that the dummy database content for demonstration purposes has been set up as intended. 
 
 ```sh
-sudo mysql -mysql -p'1234' --database='meditrack'
+sudo mysql -umysql -p'1234' --database='meditrack'
 ```
 This should log you in to MySQL. To check the database, run the following commands:
 
@@ -399,6 +399,9 @@ However, since our system incorporates freshness, the repeated message is detect
 
 As you see in the screenshot, the attacker only gets the feedback of `[Error] Bad Request`, and they are not able to use an intercepted message to obtain a legitimate user's data. 
 
+**The communications are encrypted**
+Using our network model all communications are encrypted using TLS/SSL. This is done in order to mitigate MITM and eavesdropping attacks. Below is the image of network traffic incoming from an outside client: 
+![img](./img/demo/firewall_ssl_proof.png)
 
 
 This concludes the demonstration.
