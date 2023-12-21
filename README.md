@@ -18,17 +18,15 @@ It offers insights into the rationale behind these choices, the project's archit
 
 This document presents installation and demonstration instructions.
 
-*(adapt all of the following to your project, changing to the specific Linux distributions, programming languages, libraries, etc)*
-
 ## Installation
 
-To see the project in action, it is necessary to set up a virtual environment, with 5 machines, 2 internal networks, and a third network that simulates an external network, or running over the internet.   
+To see the project in action, it is necessary to set up a virtual environment, with 5 machines, one DMZ and one internal network, and a third network that simulates an external network, or running over the internet.   
 
 The following diagram shows the networks and machines:
 
 ![Infrastructure](img/Infrastructure.png)
 
-All the virtual machines are based on: Ubuntu 64-bit, VERSION!!
+All the virtual machines are based on: Ubuntu 64-bit.
 
 We chose to use Vagrant to automate the setup of our machines and infrastructure as much as possible. The following instructions will therefore be focused on how to set up vagrant. 
 
@@ -38,13 +36,11 @@ Before you begin, ensure you have the following software installed on your machi
 - [Vagrant](https://www.vagrantup.com/downloads) - Download and install Vagrant.
 - [VirtualBox](https://www.virtualbox.org/wiki/Downloads) - Download and install VirtualBox.
 
-#### MAC?
-
 ### Machine configurations
 
-For each machine, there is an initialization script with the machine name, with prefix `init-` and suffix `.sh`, that you can find the [init-scripts folder](./vagrant/init-scripts/). These scripts, combined with the shell scripts in the Vagrantfile, install all the necessary packages and make all the required configurations in a clean machine.
+For each machine, there is an initialization script with the machine name, with prefix `init-` and suffix `.sh`, that you can find in the [init-scripts folder](./vagrant/init-scripts/). These scripts, combined with the shell scripts in the Vagrantfile, install all the necessary packages and make all the required configurations in a clean machine.
 
-Here, we will first give instructions for setting for Vagrant, before we explain the content of each machine, and give commands to verify and test the setup for each  machine. To access the machines after they have been set up, you have to use Vagrant SSH.  
+Here, we will first give instructions for setting up Vagrant, before we explain the content of each machine, and give commands to verify and test the setup for each  machine. To access the machines after they have been set up, you have to use Vagrant SSH.  
 
 #### Vagrant setup
 1. **Clone and open the repository**
@@ -66,7 +62,7 @@ Here, we will first give instructions for setting for Vagrant, before we explain
    Running this command may take a while, so just wait while Vagrant downloads the base boxes and provisions the VMs. 
 4. **Access the VMs**
    
-    After Vagrant finishes provisioning the VMs, you can access individual VMs using SSH:
+    After Vagrant finishes provisioning the VMs, you can access individual VMs using vagrant SSH:
 
     ```
     vagrant ssh <name of VM>
@@ -83,11 +79,11 @@ Here, we will first give instructions for setting for Vagrant, before we explain
 You should now be able to access the VMs. 
 
 When you are done and want to stop running the VMs, you can use halt:
-```
+```sh
 vagrant halt
 ```
 To remove the VMs permanently and clean up, use:
-```
+```sh
 vagrant destroy -f
 ```
 **Note:** This will permanently delete the VMs and their data.
@@ -95,13 +91,6 @@ vagrant destroy -f
 #### Application Server
 
 This machine runs the main functionality of the MediTrack system, by running the backend and exposing a CLI API to clients. It runs the MediTrackBackend code, using the CryptoLib. It should be able to communicate with clients and the database over TLS/SSL. 
-
-To verify:
-
-```sh
-vagrant ssh app_server
-```
-To verify and test the setup for the application server, you can provide the following commands and expected results in your README:
 
 **Verify Setup:**
 
@@ -118,44 +107,17 @@ dotnet --version
 This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors.
 
 **To test:**
-Insert commands for running the MediTrack program. 
+
+Check that you can run the AppServer program:
 ```sh
-$ test command
+/AppServerApp/AppServer
 ```
 
-
+Check that the ip address for the interface has been set up correctly:
 ```sh
 ip addr show enp0s8
 ```
 This command displays the network configurations for the VM. The provisioning script should set up the enp0s8 interface with the IP address `192.168.0.20`. 
-
-#### Client machine
-
-This machine server as a client in the MediTrack system. The client can interact with the application server to securely access patient data. The machine runs the client-side code, which runs a CLI interface for the MediTrack program. 
-
-**Verify setup:**
-**Vagrant**
-
-```sh
-vagrant ssh client_machine
-```
-You should be able to SSH into the machine without issues. After executing the command, you should be inside the VM, and the command prompt should have the user `vagrant@a31-MediTrack-client-machine`
-
-**Dotnet**
-
-```sh
-dotnet --version
-```
-This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors. 
-
-**Test setup:**
-Before running, the tests, make sure the rest of the machines are up and running. 
-
-
-```sh
-ip addr show enp0s8
-```
-This command displays the network configurations for the VM. The provisioning script should set up the enp0s8 interface with the IP address `192.168.1.30`.
 
 #### Firewall Server
 
@@ -167,17 +129,9 @@ The firewall server is an important part of securing the application and databas
 ```sh
 vagrant ssh fw_server
 ```
-This command logs you into the firewall server VM. After executing this command, you should be inside the VM, and the command prompt should reflect that, as you should see the user as `vagrant@a31-MediTrack-firewall-server:~$`.
-
-**Dotnet**
-
-```sh
-dotnet --version
-```
-This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors.
+This command logs you into the firewall server VM. After executing this command, you should be inside the VM, and the command prompt should reflect that, as you should see the user as `vagrant@a31-MediTrack-fw-server:~$`.
 
 **Iptables persistent**
-
 ```sh
 iptables-persistent --version
 ```
@@ -201,7 +155,7 @@ ip addr show enp0s8
 ip addr show enp0s9
 ip addr show enp0s10
 ```
-These commands display the network configurations for the different interfaces for the VM. The provisioning script should set up the enp0s9 interface with the IP address `192.168.0.10`, enp0s10 interface as `192.168.1.10`, and the enp0s8 interface with the address `192.168.2.10`.
+These commands display the network configurations for the different interfaces we set up for the VM. The provisioning script should set up the enp0s9 interface with the IP address `192.168.0.10`, enp0s10 interface as `192.168.1.10`, and the enp0s8 interface with the address `192.168.2.10`.
 
 #### Database Server
 
@@ -214,13 +168,6 @@ vagrant ssh db_server
 ```
 This command logs you into the database server VM. After executing this command, you should be inside the VM, and the command prompt should reflect that, as you should see the user as `vagrant@a31-MediTrack-db-server:~$`.
 
-**Dotnet**
-
-```sh
-dotnet --version
-```
-This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors.
-
 **MySQL**
 
 ```
@@ -229,22 +176,50 @@ mysql --version
 This command checks if MySQL is installed. You should see the version of MySQL installed without any errors.
 
 **Test setup:**
-INSERT CHECK OF DATABASE CONTENT
 
+First, check that the dummy database content for demonstration purposes has been set up as intended. 
 
+```sh
+sudo mysql -mysql -p'1234' --database='meditrack'
+```
+This should log you in to MySQL. To check the database, run the following commands:
+
+```sql
+use meditrack;
+show tables;
+```
+You should now see the three tables Patients, Consultation and __EFMigrationsHistory. Verify that all of these contain data by running:
+
+```sql
+SELECT * FROM Patients;
+SELECT * FROM Consultation;
+SELECT * FROM __EFMigrationsHistory;
+```
+When you have verified that all of these contain data, you can exit MySql by writing
+
+```sql
+exit;
+```
+If you have any issues with the database or missing data, you can try importing the data again by running the following command:
+
+```sh
+mysql -umysql -p'1234' --database='meditrack' < /MediTrack/MediTrackBackend/Migrations/init.sql
+```
+
+Next, we verify the IP setup by running:
 ```sh
 ip addr show enp0s8
 ```
 This command displays the network configurations for the VM. The provisioning script should set up the enp0s8 interface with the IP address `192.168.1.30`.
 
 #### Authentication Server
-Teh authentication server is an important part of ensuring the security of the system. It is used to verify the signatures and encryption used in the other components of the system. 
+The authentication server is an important part of ensuring the security of the system. It is used to verify the signatures and encryption used in the other components of the system. 
 
 **Vagrant**
 ```sh
-vagrant ssh db_server
+vagrant ssh auth_server
 ```
-This command logs you into the database server VM. After executing this command, you should be inside the VM, and the command prompt should reflect that, as you should see the user as `vagrant@a31-MediTrack-db-server:~$`.
+This command logs you into the database server VM. After executing this command, you should be inside the VM, and the command prompt should reflect that, as you should see the user as `vagrant@a31-MediTrack-auth-server:~$`.
 
 **Dotnet**
 
@@ -253,9 +228,52 @@ dotnet --version
 ```
 This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors.
 
+**Testing**
+
+Check that you can run the AppServer program:
+```sh
+/AppServerApp/AppServer
+```
+
+Verify that the network configurations for the IP were set up correctly:
+```sh
+ip addr show enp0s8
+```
+
+#### Client machine
+
+This machine server as a client in the MediTrack system. The client can interact with the application server to securely access patient data. The machine runs the client-side code, which runs a CLI interface for the MediTrack program. 
+
+**Verify setup:**
+
+**Vagrant**
+
+```sh
+vagrant ssh client_machine
+```
+You should be able to SSH into the machine without issues. After executing the command, you should be inside the VM, and the command prompt should have the user `vagrant@a31-MediTrack-client-machine`
+
+**Dotnet**
+
+```sh
+dotnet --version
+```
+This command checks if the .NET runtime is installed. You should see the version of .NET installed without any errors. 
+
+**Test setup:**
+The client can be considered the last entity to connect to the network, as it is connected every time a patient or a physician wants to perform a task. You should therefore verify that all other machines in the system are up and running as intended before testing this machine. 
+
+INSERT TEST COMMANDS
+
+```sh
+ip addr show enp0s8
+```
+This command displays the network configurations for the VM. The provisioning script should set up the enp0s8 interface with the IP address `192.168.1.30`.
+
 ## Demonstration
 
 Now that all the networks and machines are up and running, we can have a look at the actual functionality of the system. 
+
 
 *(give a tour of the best features of the application; add screenshots when relevant)*
 - Show the different functions of the client-side system
@@ -278,11 +296,11 @@ This concludes the demonstration.
 
 ### Links to Used Tools and Libraries
 
-- [C#]()
-- [.NET]()
-- [Vagrant]()
-- [VirtualBox]()
-- [MySQL]()
+- [C#](https://learn.microsoft.com/en-us/dotnet/csharp/)
+- [.NET](https://learn.microsoft.com/en-us/dotnet/)
+- [Vagrant](https://www.vagrantup.com/)
+- [VirtualBox](https://www.virtualbox.org/)
+- [MySQL](https://www.mysql.com/)
 
 ### License
 
@@ -290,3 +308,6 @@ This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.t
 
 ----
 END OF README
+
+
+
