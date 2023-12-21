@@ -41,7 +41,7 @@ sudo sysctl -p
 # Enable the firewall, flush NAT rules # TODO: Add flush for firewall
 sudo iptables -F
 sudo iptables -t nat -F
-sudo iptables -t nat -A POSTROUTING  -o enp0s8 -j MASQUERADE    # Creates a source NAT on interface enp0s8
+sudo iptables -t nat -A POSTROUTING  -j MASQUERADE    # Creates a source NAT on interface enp0s8
 
 # NAT rules
 # Set default policies
@@ -63,15 +63,19 @@ sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
 # almost works
 sudo iptables -A FORWARD -d 192.168.0.20 -p tcp -m tcp --dport 443 -j ACCEPT
-sudo iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.0.20:443 #:5001
+sudo iptables -t nat -A PREROUTING -i enp0s8 -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.0.20:443 #:5001
 
 # Allow replies to established connection
 sudo iptables -A FORWARD -i enp0s9 -o enp0s8 -m state --state ESTABLISHED -j ACCEPT
 #? Do we need a nat rule for routing back to the client?
-
+#
 # Forward incoming TSL/SSL connections from app with destination db server (AS -> DB)
-sudo iptables -A FORWARD -s 192.168.0.20 -d 192.168.1.30 -p tcp -m tcp --dport 443 -j ACCEPT
-sudo iptables -t nat -A PREROUTING -s 192.168.0.20 -d 192.168.1.30 -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.1.30:443
+#
+sudo iptables -A FORWARD -d 192.168.1.30 -p tcp -m tcp --dport 3306 -j ACCEPT
+sudo iptables -t nat -A PREROUTING -i enp0s9 -p tcp -m tcp --dport 3306 -j DNAT --to-destination 192.168.1.30:3306
+#
+# sudo iptables -A FORWARD -i enp0s9 -o enp0s10 -p tcp -m tcp --dport 443 -j ACCEPT
+# sudo iptables -A FORWARD -s 192.168.0.20 -d 192.168.1.30 -p tcp -m tcp --dport 443 -j ACCEPT
 
 #  Forward requests from DB to App_server
 sudo iptables -A FORWARD -i enp0s10 -o enp0s9 -m state --state ESTABLISHED -j ACCEPT 

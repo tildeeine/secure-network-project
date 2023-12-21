@@ -20,8 +20,9 @@ string AUTH_SERVER_URL = "https://localhost:5002";
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure DB
-var connectionString = "server=localhost;user=mysql;password=1234;database=meditrack";
+// Configure DB                    Server=localhost;Port=1234;Database=My_Mysql_Database;Uid=root;Pwd=root;
+// var connectionString = "server=192.168.0.10;user=mysql;password=1234;database=meditrack";
+var connectionString = "server=192.168.1.30;user=mysql;password=1234;database=meditrack";
 builder.Services.AddDbContext<MediTrackDb>(opt =>
     opt.UseMySql(
         connectionString,
@@ -143,7 +144,6 @@ app.MapGet("/patients/{patientNIC}", async (
 
 app.MapGet("/my-info/{NIC}", async (HttpRequest request, MediTrackDb db, string NIC, int id) =>
 {
-
     var patient = await db.Patients.Where(v => v.NIC == NIC).FirstOrDefaultAsync();
 
     if (patient is null)
