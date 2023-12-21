@@ -316,7 +316,7 @@ The main functionality is the patient and the physicians obtaining the relevant 
 
 **The patient wants to log in and get their records**
 
-The patient can log in to the system by providing their keys, as well as their NIC as a unique identifier. 
+The patient can log in to the system by providing their keys, as well as their NIF as a unique identifier. 
 
 For the demonstration, we have set up the patient and the doctor to be the same default user, but using the parameter patient logs you in as the patient. Run the following command:
 
@@ -375,7 +375,7 @@ The output of this command should be all of the patients health records, decrypt
 
 ![img](./img/demo/charlie_emergency_situation.png)
 
-**The Server receives encrypts data**
+**The Server encrypts data**
 
 When the server receives a request for some data, it will get the requested data from the datbase, and the use the security library we developed for `secure documents` to protect the data. The following image shows what the data looks like before and after the protection is called. Note that this was shown by adding extra logging commands in the dotnet code, and we don't usually show this data in the CLI. 
 
@@ -383,11 +383,23 @@ When the server receives a request for some data, it will get the requested data
 
 **An attacker attempts to impersonate another user**
 
-In our example, the attacker is Bob, trying to impersonate Charlie. The attacker tries to use Charlie's NIC, but with their own keypair. 
+when starting our application, the client provides the input of the NIF, the users role, and its keys. This is to simulate someone entering the program by using their identity card, containing their keys, and providing their role and NIF. To show that our system performs verification of the keys against the user NIF and role, we show the scenario where an attacker, in this case Bob, is trying to impersonate another user, Charlie, by inputting their NIF number instead of their own. The user will still see the CLI interface, but once they try to actually perform any operations, they will only receive errors, and won't be able to retrieve any useful data. See the expected output for the command below:
 
 ![img](./img/demo/bob_doctor_impersonating_charlie.png)
 
-As you can see from the image, we get the error message `[Error] Bad Request`.
+As you can see from the image, we get the error message `[Error] Bad Request`. This is the only message the attacker will get, as their keypair is not valid for the NIF they provided. 
+
+**An attacker attempts a replay attack against the system**
+
+As we define in our attacker model, in the [report](./REPORT.md), we assume the attacker is able to eavesdrop and intercept our connection. A common attack for an attacker with these capabilities is to run a replay attack. This means that the attacker has intercepted a previously successfull request, and tries to send this again to get the response sent to themselves. 
+
+However, since our system incorporates freshness, the repeated message is detected and will not be answered by the application server. See the expected output of the attack below:
+
+![img](./img/demo/rerun_successfull_request_simulate_replay_attack.png)
+
+As you see in the screenshot, the attacker only gets the feedback of `[Error] Bad Request`, and they are not able to use an intercepted message to obtain a legitimate user's data. 
+
+
 
 This concludes the demonstration.
 
