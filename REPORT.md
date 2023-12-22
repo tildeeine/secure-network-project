@@ -144,6 +144,11 @@ The firewall adds security for the application server and database server throug
 
 More specifically, we implemented the following firewall and NAT rules for our firewall server iptables configuration:
 ```sh
+
+sudo iptables -F
+sudo iptables -t nat -F
+sudo iptables -t nat -A POSTROUTING  -j MASQUERADE
+
 # Set default policies
 sudo iptables -P INPUT DROP
 sudo iptables -P FORWARD DROP
@@ -153,23 +158,24 @@ sudo iptables -P OUTPUT DROP
 sudo iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT 
 sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
 
-# Allow connections from client to application server
+# Forward incoming TLS/SSL connections on enp0s8 to app server (EXT -> AS)
 sudo iptables -A FORWARD -d 192.168.0.20 -p tcp -m tcp --dport 443 -j ACCEPT
-sudo iptables -t nat -A PREROUTING -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.0.20:443
+sudo iptables -t nat -A PREROUTING -i enp0s8 -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.0.20:443 #:5001
 
 # Allow replies to established connection
 sudo iptables -A FORWARD -i enp0s9 -o enp0s8 -m state --state ESTABLISHED -j ACCEPT
 
 # Forward incoming TSL/SSL connections from app with destination db server (AS -> DB)
-sudo iptables -A FORWARD -s 192.168.0.20 -d 192.168.1.30 -p tcp -m tcp --dport 443 -j ACCEPT
-sudo iptables -t nat -A PREROUTING -s 192.168.0.20 -d 192.168.1.30 -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.1.30:443
+sudo iptables -A FORWARD -d 192.168.1.30 -p tcp -m tcp --dport 3306 -j ACCEPT
+sudo iptables -t nat -A PREROUTING -i enp0s9 -p tcp -m tcp --dport 3306 -j DNAT --to-destination 192.168.1.30:3306
+
 
 #  Forward requests from DB to App_server
 sudo iptables -A FORWARD -i enp0s10 -o enp0s9 -m state --state ESTABLISHED -j ACCEPT 
 
-# Forward outgoing TLS/SSL connections from app server to auth server (AS -> AuthS) 
-sudo iptables -A FORWARD -s 192.168.0.20 -p tcp -m tcp --dport 443 -j ACCEPT
-sudo iptables -t nat -A PREROUTING -s 192.168.0.20 -d 192.168.3.100 -p tcp -m tcp --dport 5002 -j DNAT --to-destination 192.168.3.100:5002 
+# Forward outgoing TLS/SSL connections from app server to auth server (AS -> AuthS) #! Only case where app server can initiate a connection
+sudo iptables -A FORWARD -d 192.168.2.100 -p tcp -m tcp --dport 5002 -j ACCEPT
+sudo iptables -t nat -A PREROUTING -i enp0s9 -p tcp -m tcp --dport 5002 -j DNAT --to-destination 192.168.2.100:5002 #! check ports
 
 # Allow replies to established connection
 sudo iptables -A FORWARD -i enp0s8 -o enp0s9 -m state --state ESTABLISHED -j ACCEPT
