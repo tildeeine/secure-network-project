@@ -107,6 +107,7 @@ public class Crypto
         // check freshness if message is authentic
         if (result && ids is not null && ids.Contains(id))
         {
+            Console.WriteLine($"Message with {id} isn't fresh.");
             return false;
         }
         return result;

@@ -50,7 +50,7 @@ class Program
     //static string MEDITRACK_HOST = "https://localhost:5001";
 	//static string MEDITRACK_HOST = "https://192.168.2.10:5001";
     static string MEDITRACK_HOST = "https://192.168.2.10";
-    static string AUTH_SERVER_HOST = "https://localhost:5002";
+    static string AUTH_SERVER_HOST = "https://192.168.2.100:5002";
 
     static string serverPublicKey = null!; 
 
@@ -62,11 +62,11 @@ class Program
 
         HttpClientHandler clientHandler = new HttpClientHandler();
         clientHandler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => { 
-            Console.WriteLine(sender);
-            Console.WriteLine(cert);
+            // Console.WriteLine(sender);
+            // Console.WriteLine(cert);
             if (cert?.Subject == "CN=meditrack-server" || cert?.Subject == "CN=auth-server")
             {
-                Console.WriteLine($"It matches: {cert}");
+                // Console.WriteLine($"It matches: {cert}");
                 return true;
             }
             return false; 

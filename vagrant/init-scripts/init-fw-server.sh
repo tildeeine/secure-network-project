@@ -55,27 +55,18 @@ sudo iptables -P OUTPUT DROP
 # Allow SSH connections from vagrant to the firewall server
 sudo iptables -A INPUT -p tcp --dport 22 -m state --state NEW,ESTABLISHED -j ACCEPT 
 sudo iptables -A OUTPUT -p tcp --sport 22 -m state --state ESTABLISHED -j ACCEPT
-# sudo iptables -A FORWARD -p tcp -m tcp --dport 22 --state ESTABLISHED -j ACCEPT # Requires fw to be set up first
 
 # Forward incoming TLS/SSL connections on enp0s8 to app server (EXT -> AS)
-# sudo iptables -t nat -A PREROUTING -i enp0s8 -o enp0s9 -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.0.20:5001
-# sudo iptables -t nat -A POSTROUTING -i enp0s9 -o enp0s8 -p tcp -m tcp -d 192.168.0.20 --dport 443 -j SNAT --to-source 192.168.2.10
-
-# almost works
 sudo iptables -A FORWARD -d 192.168.0.20 -p tcp -m tcp --dport 443 -j ACCEPT
 sudo iptables -t nat -A PREROUTING -i enp0s8 -p tcp -m tcp --dport 443 -j DNAT --to-destination 192.168.0.20:443 #:5001
 
 # Allow replies to established connection
 sudo iptables -A FORWARD -i enp0s9 -o enp0s8 -m state --state ESTABLISHED -j ACCEPT
-#? Do we need a nat rule for routing back to the client?
-#
+
 # Forward incoming TSL/SSL connections from app with destination db server (AS -> DB)
-#
 sudo iptables -A FORWARD -d 192.168.1.30 -p tcp -m tcp --dport 3306 -j ACCEPT
 sudo iptables -t nat -A PREROUTING -i enp0s9 -p tcp -m tcp --dport 3306 -j DNAT --to-destination 192.168.1.30:3306
-#
-# sudo iptables -A FORWARD -i enp0s9 -o enp0s10 -p tcp -m tcp --dport 443 -j ACCEPT
-# sudo iptables -A FORWARD -s 192.168.0.20 -d 192.168.1.30 -p tcp -m tcp --dport 443 -j ACCEPT
+
 
 #  Forward requests from DB to App_server
 sudo iptables -A FORWARD -i enp0s10 -o enp0s9 -m state --state ESTABLISHED -j ACCEPT 
@@ -84,8 +75,8 @@ sudo iptables -A FORWARD -i enp0s10 -o enp0s9 -m state --state ESTABLISHED -j AC
 #sudo iptables -t nat -A POSTROUTING -s 192.168.1.30 -d 192.168.0.20 -p tcp --sport 443 -m state --state ESTABLISHED -j SNAT --to-source 192.168.0.20:443
 
 # Forward outgoing TLS/SSL connections from app server to auth server (AS -> AuthS) #! Only case where app server can initiate a connection
-sudo iptables -A FORWARD -s 192.168.0.20 -p tcp -m tcp --dport 443 -j ACCEPT
-sudo iptables -t nat -A PREROUTING -s 192.168.0.20 -d 192.168.3.100 -p tcp -m tcp --dport 5002 -j DNAT --to-destination 192.168.3.100:5002 #! check ports
+sudo iptables -A FORWARD -d 192.168.2.100 -p tcp -m tcp --dport 5002 -j ACCEPT
+sudo iptables -t nat -A PREROUTING -i enp0s9 -p tcp -m tcp --dport 5002 -j DNAT --to-destination 192.168.2.100:5002 #! check ports
 
 # Allow replies to established connection
 sudo iptables -A FORWARD -i enp0s8 -o enp0s9 -m state --state ESTABLISHED -j ACCEPT
